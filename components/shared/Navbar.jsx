@@ -6,12 +6,29 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaSun, FaMoon, FaBars, FaChevronDown } from "react-icons/fa";
 import { FaCartShopping } from "react-icons/fa6";
+import { useEffect, useRef, useState } from "react";
 
 const Navbar = ({ sideMenu }) => {
   const { theme, toggleTheme, mounted } = useTheme();
   const { data: session, status } = useSession();
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  if (!mounted) return null;
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (status === "loading") {
+    return (
+      <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+    );
+  }
 
   const userMenu = [
     { name: "Home", href: "/" },
@@ -72,12 +89,13 @@ const Navbar = ({ sideMenu }) => {
                   </span>
                 </button>
                 {/* User menu */}
-                <div className="relative">
-                  {status === "loading" ? (
-                    <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
-                  ) : session?.user ? (
-                    <div className="flex items-center space-x-4">
-                      <button className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
+                <div className="relative" ref={dropdownRef}>
+                  {session?.user ? (
+                    <>
+                      <button
+                        onClick={() => setOpen(!open)}
+                        className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
+                      >
                         {session.user.image ? (
                           <Image
                             src={session.user.image}
@@ -92,18 +110,57 @@ const Navbar = ({ sideMenu }) => {
                               session.user.email?.charAt(0)}
                           </div>
                         )}
-                        <span className="hidden sm:block">
+                        <span className="hidden sm:block truncate max-w-[120px]">
                           {session.user.name || session.user.email}
                         </span>
                         <FaChevronDown className="w-3 h-3" />
                       </button>
-                      <button
-                        onClick={() => signOut()}
-                        className="text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 px-3 py-1 text-sm"
-                      >
-                        Logout
-                      </button>
-                    </div>
+
+                      {/* Dropdown menu */}
+                      {open && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
+                          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {session.user.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {session.user.email}
+                            </p>
+                          </div>
+                          <ul className="py-1 text-sm text-gray-700 dark:text-gray-300">
+                            <li>
+                              <Link
+                                href="/profile"
+                                className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                onClick={() => setOpen(false)}
+                              >
+                                Profile
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href="/orders"
+                                className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                onClick={() => setOpen(false)}
+                              >
+                                Orders
+                              </Link>
+                            </li>
+                          </ul>
+                          <div className="border-t border-gray-200 dark:border-gray-700">
+                            <button
+                              onClick={() => {
+                                setOpen(false);
+                                signOut();
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              Logout
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <Link
                       href="/login"

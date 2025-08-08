@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ceredntialLogin, doSocialLogin } from "@/app/actions";
-
+import { credentialLogin, doSocialLogin } from "@/app/actions";
 export default function LoginForm({ isModal = false }) {
   const router = useRouter();
 
@@ -35,12 +34,15 @@ export default function LoginForm({ isModal = false }) {
       form.append("email", formData.email);
       form.append("password", formData.password);
       form.append("remember", formData.remember);
-
-      const response = await ceredntialLogin(form);
+      console.log("Attempting credential login with:", form);
+      console.log(`email: ${form.get("email")}`);
+      console.log(`password: ${form.get("password")}`);
+      const response = await credentialLogin(form);
       if (response?.error) {
         setError(response.error);
       } else {
         router.push("/");
+        router.refresh();
       }
     } catch (err) {
       setError(err.message || "Something went wrong");
@@ -222,7 +224,7 @@ export default function LoginForm({ isModal = false }) {
           </h3>
           <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
             <div>
-              <strong>Customer:</strong> customer@demo.com / password123
+              <strong>Customer:</strong> abc@gmail.com / 12345677
             </div>
             <div>
               <strong>Farmer:</strong> farmer@demo.com / password123

@@ -3,29 +3,39 @@
 import { signIn } from "@/auth";
 import userModel from "@/model/user-model";
 import { dbConnect } from "@/service/mongo";
-import bcrypt from "bcryptjs";
 import fs from "fs/promises";
 import path from "path";
 
-// Existing login actions
-export async function ceredntialLogin(formData) {
+export async function credentialLogin(formData) {
     try {
+        console.log("Attempting credential login with:", {
+            email: formData.get("email"),
+            password: formData.get("password"),
+            remember: formData.get("remember"),
+        });
         const response = await signIn("credentials", {
             email: formData.get("email"),
             password: formData.get("password"),
-            redirect: false
+            redirect: false,
         });
+        console.log("SignIn response:", response);
         return response;
     } catch (error) {
+        console.error("Credential login error:", error);
         throw new Error(error.message || "Login failed");
     }
 }
 
 export async function doSocialLogin(formData) {
     const action = formData.get("action");
-    await signIn(action, { redirectTo: "/" });
+    console.log("Attempting social login with action:", action);
+    try {
+        await signIn(action, { redirectTo: "/" });
+    } catch (error) {
+        console.error("Social login error:", error);
+        throw new Error("Social login failed");
+    }
 }
-
 // Updated registration action
 export async function registerUser(formData) {
     await dbConnect();
@@ -66,7 +76,7 @@ export async function registerUser(formData) {
             firstName,
             lastName,
             email,
-            password, // Will be hashed by the schema's pre-save hook
+            password,
             phone,
             address,
             bio,

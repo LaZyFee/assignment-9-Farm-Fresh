@@ -8,8 +8,7 @@ import { dbConnect } from "./service/mongo";
 
 async function refreshAccessToken(token) {
     try {
-        const url =
-            "https://oauth2.googleapis.com/token?" +
+        const url = "https://oauth2.googleapis.com/token?" +
             new URLSearchParams({
                 client_id: process.env.GOOGLE_CLIENT_ID,
                 client_secret: process.env.GOOGLE_CLIENT_SECRET,
@@ -17,31 +16,20 @@ async function refreshAccessToken(token) {
                 refresh_token: token.refreshToken,
             });
 
-        const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            method: 'POST'
-        });
-
+        const response = await fetch(url, { method: "POST" });
         const refreshedTokens = await response.json();
 
-        if (!response.ok) {
-            throw refreshedTokens;
-        }
+        if (!response.ok) throw refreshedTokens;
 
         return {
             ...token,
-            accessToken: refreshedTokens?.access_token,
-            accessTokenExpires: Date.now() + refreshedTokens?.expires_in * 1000,
-            refreshToken: refreshedTokens?.refresh_token,
+            accessToken: refreshedTokens.access_token,
+            accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
+            refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
         };
     } catch (error) {
-        console.log(error);
-        return {
-            ...token,
-            error: "RefreshAccessTokenError"
-        };
+        console.error("Error refreshing access token:", error);
+        return { ...token, error: "RefreshAccessTokenError" };
     }
 }
 
@@ -55,32 +43,45 @@ export const {
     providers: [
         CredentialsProvider({
             async authorize(credentials) {
-                if (credentials == null) return null;
+                if (!credentials?.email || !credentials?.password) {
+                    console.error("Missing credentials");
+                    throw new Error("Email and password are required");
+                }
 
                 try {
-                    const user = await userModel.findOne({
-                        email: credentials?.email,
-                    });
+                    await dbConnect();
+                    console.log("Looking up user with email:", credentials.email);
+                    const user = await userModel.findOne({ email: credentials.email }).lean();
 
-                    if (user) {
-                        const isMatch = await bcrypt.compare(
-                            credentials.password,
-                            user.password
-                        );
-
-                        if (isMatch) {
-                            return user;
-                        } else {
-                            console.error("password mismatch");
-                            throw new Error("Check your password");
-                        }
-                    } else {
-                        console.error("User not found");
+                    if (!user) {
+                        console.error("User not found for email:", credentials.email);
                         throw new Error("User not found");
                     }
+
+                    console.log("Comparing passwords for user:", user.email);
+                    const isMatch = await bcrypt.compare(credentials.password, user.password);
+
+                    if (!isMatch) {
+                        console.error("Password mismatch for user:", user.email);
+                        throw new Error("Check your password");
+                    }
+
+                    console.log("User authenticated successfully:", user.email);
+                    return {
+                        id: user._id.toString(),
+                        email: user.email,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        name: `${user.firstName} ${user.lastName}`,
+                        profilePicture: user.profilePicture || null,
+                        userType: user.userType,
+                        phone: user.phone,
+                        address: user.address,
+                        bio: user.bio
+                    };
                 } catch (err) {
-                    console.error(err);
-                    throw new Error(err);
+                    console.error("Authorize error:", err);
+                    throw new Error(err.message || "Authentication failed");
                 }
             },
         }),
@@ -96,7 +97,6 @@ export const {
             },
         }),
     ],
-
 
     callbacks: {
         async signIn({ user, account }) {
@@ -117,7 +117,6 @@ export const {
                             address: "Not provided",
                             profilePicture: user.image || null,
                         });
-
                     }
                 }
 
@@ -128,28 +127,118 @@ export const {
             }
         },
 
-
         async jwt({ token, user, account }) {
+            console.log("JWT Callback - Initial token:", token);
+            console.log("JWT Callback - User:", user);
+            console.log("JWT Callback - Account:", account);
+
+            // Initial sign in
             if (account && user) {
-                return {
-                    accessToken: account?.access_token,
-                    accessTokenExpires: Date.now() + account?.expires_in * 1000,
-                    refreshToken: account?.refresh_token,
-                    user,
-                };
+                if (account.type === "credentials") {
+                    console.log("JWT Callback - Processing credentials login");
+                    return {
+                        ...token,
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        profilePicture: user.profilePicture,
+                        userType: user.userType,
+                        phone: user.phone,
+                        address: user.address,
+                        bio: user.bio,
+                        loginType: "credentials",
+                    };
+                }
+
+                if (account.provider === "google") {
+                    console.log("JWT Callback - Processing Google login");
+                    return {
+                        ...token,
+                        accessToken: account.access_token,
+                        accessTokenExpires: Date.now() + account.expires_in * 1000,
+                        refreshToken: account.refresh_token,
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        image: user.image,
+                        loginType: "google",
+                    };
+                }
             }
 
-            if (Date.now() < token?.accessTokenExpires) {
+            if (token.loginType === "credentials") {
+                console.log("JWT Callback - Returning existing credentials token");
                 return token;
             }
 
-            return refreshAccessToken(token);
+            // Google token refresh
+            if (token.loginType === "google") {
+                if (Date.now() < token.accessTokenExpires) {
+                    console.log("JWT Callback - Google token still valid");
+                    return token;
+                }
+                console.log("JWT Callback - Refreshing Google token");
+                return await refreshAccessToken(token);
+            }
+
+            return token;
         },
+
         async session({ session, token }) {
-            session.user = token?.user;
-            session.accessToken = token?.access_token;
-            session.error = token?.error;
+            console.log("Session Callback - Token:", token);
+
+            if (token?.error === "RefreshAccessTokenError") {
+                session.error = token.error;
+            }
+
+            // different token structures
+            let userData;
+
+            if (token.loginType === "credentials") {
+                if (token.user && token.user._doc) {
+                    userData = token.user._doc;
+                } else {
+                    userData = token;
+                }
+
+                session.user = {
+                    id: token.sub || token.id,
+                    name: `${userData.firstName} ${userData.lastName}`,
+                    email: userData.email,
+                    image: userData.profilePicture || null,
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    userType: userData.userType,
+                    phone: userData.phone,
+                    address: userData.address,
+                    bio: userData.bio
+                };
+            } else if (token.loginType === "google") {
+                // Google login structure
+                session.user = {
+                    id: token.id || token.sub,
+                    name: token.name,
+                    email: token.email,
+                    image: token.image || null
+                };
+            } else {
+                // Fallback for any other cases
+                session.user = {
+                    id: token.sub || token.id,
+                    name: token.name,
+                    email: token.email,
+                    image: token.image || token.profilePicture || null
+                };
+            }
+
+            if (token.accessToken) {
+                session.accessToken = token.accessToken;
+            }
+
+            console.log("Session Callback - Final session:", session);
             return session;
-        },
+        }
     },
 });
