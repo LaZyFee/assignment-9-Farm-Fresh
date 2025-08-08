@@ -11,13 +11,14 @@ export const metadata = {
   description: "Local Farmer Booking Platform",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children, modal }) {
   return (
     <html lang="en">
       <body className={`min-h-screen ${inter.className}`}>
         <SessionProvider>
           <Navbar sideMenu={true} />
           {children}
+          {modal}
           <Footer />
         </SessionProvider>
       </body>
