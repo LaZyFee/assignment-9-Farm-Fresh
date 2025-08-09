@@ -10,20 +10,20 @@ export default auth((req) => {
     const { nextUrl } = req;
     const isAuthenticated = !!req.auth;
 
-    console.log({
-        isAuthenticated,
-        pathname: nextUrl.pathname,
-        auth: req.auth,
-    });
+    // console.log({
+    //     isAuthenticated,
+    //     pathname: nextUrl.pathname,
+    //     auth: req.auth,
+    // });
 
     const isPublicRoute = PUBLIC_ROUTES.find((route) =>
         nextUrl.pathname.startsWith(route)
     ) || nextUrl.pathname === ROOT;
 
-    console.log({ isPublicRoute });
+    // console.log({ isPublicRoute });
 
     if (!isAuthenticated && !isPublicRoute) {
-        console.log("Redirecting to login from:", nextUrl.pathname);
+        // console.log("Redirecting to login from:", nextUrl.pathname);
         return Response.redirect(new URL(LOGIN, nextUrl));
     }
 });

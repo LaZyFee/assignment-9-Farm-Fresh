@@ -13,7 +13,6 @@ const Navbar = ({ sideMenu }) => {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {

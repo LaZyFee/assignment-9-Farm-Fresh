@@ -34,9 +34,9 @@ export default function LoginForm({ isModal = false }) {
       form.append("email", formData.email);
       form.append("password", formData.password);
       form.append("remember", formData.remember);
-      console.log("Attempting credential login with:", form);
-      console.log(`email: ${form.get("email")}`);
-      console.log(`password: ${form.get("password")}`);
+      // console.log("Attempting credential login with:", form);
+      // console.log(`email: ${form.get("email")}`);
+      // console.log(`password: ${form.get("password")}`);
       const response = await credentialLogin(form);
       if (response?.error) {
         setError(response.error);

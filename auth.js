@@ -5,6 +5,8 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import userModel from "./model/user-model";
 import { dbConnect } from "./service/mongo";
+import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
+import mongoClientPromise from "./service/mongoClinetPromise";
 
 async function refreshAccessToken(token) {
     try {
@@ -40,6 +42,11 @@ export const {
     handlers: { GET, POST },
 } = NextAuth({
     ...authConfig,
+    adapter: MongoDBAdapter(mongoClientPromise, { databaseName: process.env.ENVIRONMENT }),
+    session: {
+        strategy: 'jwt',
+        maxAge: 30 * 24 * 60 * 60,
+    },
     providers: [
         CredentialsProvider({
             async authorize(credentials) {
@@ -50,7 +57,7 @@ export const {
 
                 try {
                     await dbConnect();
-                    console.log("Looking up user with email:", credentials.email);
+                    // console.log("Looking up user with email:", credentials.email);
                     const user = await userModel.findOne({ email: credentials.email }).lean();
 
                     if (!user) {
@@ -58,7 +65,7 @@ export const {
                         throw new Error("User not found");
                     }
 
-                    console.log("Comparing passwords for user:", user.email);
+                    // console.log("Comparing passwords for user:", user.email);
                     const isMatch = await bcrypt.compare(credentials.password, user.password);
 
                     if (!isMatch) {
@@ -66,7 +73,7 @@ export const {
                         throw new Error("Check your password");
                     }
 
-                    console.log("User authenticated successfully:", user.email);
+                    // console.log("User authenticated successfully:", user.email);
                     return {
                         id: user._id.toString(),
                         email: user.email,
@@ -88,6 +95,7 @@ export const {
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
             authorization: {
                 params: {
                     prompt: "consent",
@@ -128,14 +136,14 @@ export const {
         },
 
         async jwt({ token, user, account }) {
-            console.log("JWT Callback - Initial token:", token);
-            console.log("JWT Callback - User:", user);
-            console.log("JWT Callback - Account:", account);
+            // console.log("JWT Callback - Initial token:", token);
+            // console.log("JWT Callback - User:", user);
+            // console.log("JWT Callback - Account:", account);
 
             // Initial sign in
             if (account && user) {
                 if (account.type === "credentials") {
-                    console.log("JWT Callback - Processing credentials login");
+                    // console.log("JWT Callback - Processing credentials login");
                     return {
                         ...token,
                         id: user.id,
@@ -153,33 +161,37 @@ export const {
                 }
 
                 if (account.provider === "google") {
-                    console.log("JWT Callback - Processing Google login");
+                    // Fetch from DB to ensure ID and image are set
+                    await dbConnect();
+                    const dbUser = await userModel.findOne({ email: user.email }).lean();
+
                     return {
                         ...token,
+                        id: dbUser?._id?.toString() || user.id,
+                        email: user.email,
+                        name: dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : user.name,
+                        image: dbUser?.profilePicture || user.image,
                         accessToken: account.access_token,
                         accessTokenExpires: Date.now() + account.expires_in * 1000,
                         refreshToken: account.refresh_token,
-                        id: user.id,
-                        email: user.email,
-                        name: user.name,
-                        image: user.image,
                         loginType: "google",
                     };
                 }
+
             }
 
             if (token.loginType === "credentials") {
-                console.log("JWT Callback - Returning existing credentials token");
+                // console.log("JWT Callback - Returning existing credentials token");
                 return token;
             }
 
             // Google token refresh
             if (token.loginType === "google") {
                 if (Date.now() < token.accessTokenExpires) {
-                    console.log("JWT Callback - Google token still valid");
+                    // console.log("JWT Callback - Google token still valid");
                     return token;
                 }
-                console.log("JWT Callback - Refreshing Google token");
+                // console.log("JWT Callback - Refreshing Google token");
                 return await refreshAccessToken(token);
             }
 
@@ -187,7 +199,7 @@ export const {
         },
 
         async session({ session, token }) {
-            console.log("Session Callback - Token:", token);
+            // console.log("Session Callback - Token:", token);
 
             if (token?.error === "RefreshAccessTokenError") {
                 session.error = token.error;
@@ -237,7 +249,7 @@ export const {
                 session.accessToken = token.accessToken;
             }
 
-            console.log("Session Callback - Final session:", session);
+            // console.log("Session Callback - Final session:", session);
             return session;
         }
     },
