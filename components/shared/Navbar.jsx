@@ -5,7 +5,7 @@ import useTheme from "@/hooks/useTheme";
 import Image from "next/image";
 import Link from "next/link";
 import { FaSun, FaMoon, FaBars, FaChevronDown } from "react-icons/fa";
-import { FaCartShopping } from "react-icons/fa6";
+import { FaCartShopping, FaHeart } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 
 const Navbar = ({ sideMenu }) => {
@@ -28,13 +28,23 @@ const Navbar = ({ sideMenu }) => {
       <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
     );
   }
-
+  // user -"Home", "Products", "Farmers" "My Orders", "About", "Logout",
   const userMenu = [
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
     { name: "Farmers", href: "/farmers" },
+    { name: "My Orders", href: "/my-orders" },
     { name: "About", href: "/about" },
   ];
+  // farmer - "Home", "Add Product", "Manage Products", "About", "Logout",
+  const farmerMenu = [
+    { name: "Home", href: "/" },
+    { name: "Add Product", href: "/add-product" },
+    { name: "Manage Products", href: "/manage-products" },
+    { name: "About", href: "/about" },
+  ];
+  const routesToRender =
+    session?.user?.userType === "farmer" ? farmerMenu : userMenu;
 
   return (
     <nav className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-40">
@@ -59,7 +69,7 @@ const Navbar = ({ sideMenu }) => {
           {sideMenu && (
             <>
               <div className="hidden md:flex items-center space-x-8">
-                {userMenu.map((item, index) => (
+                {routesToRender.map((item, index) => (
                   <Link
                     key={index}
                     href={item.href}
@@ -81,12 +91,15 @@ const Navbar = ({ sideMenu }) => {
                 </div>
 
                 {/* Cart */}
-                <button className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400">
+                <Link
+                  href="/cart"
+                  className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
+                >
                   <FaCartShopping />
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     3
                   </span>
-                </button>
+                </Link>
                 {/* User menu */}
                 <div className="relative" ref={dropdownRef}>
                   {session?.user ? (
@@ -138,11 +151,11 @@ const Navbar = ({ sideMenu }) => {
                             </li>
                             <li>
                               <Link
-                                href="/orders"
+                                href="/favourites"
                                 className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 onClick={() => setOpen(false)}
                               >
-                                Orders
+                                Favourites
                               </Link>
                             </li>
                           </ul>

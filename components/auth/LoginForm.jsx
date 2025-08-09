@@ -227,7 +227,7 @@ export default function LoginForm({ isModal = false }) {
               <strong>Customer:</strong> abc@gmail.com / 12345677
             </div>
             <div>
-              <strong>Farmer:</strong> farmer@demo.com / password123
+              <strong>Farmer:</strong> lazyfeeunofficial@gmail.com / 1234567
             </div>
           </div>
         </div>
