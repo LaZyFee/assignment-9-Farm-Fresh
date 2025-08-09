@@ -162,12 +162,12 @@ export default function LoginForm({ isModal = false }) {
                   Remember me
                 </span>
               </label>
-              <a
-                href="/forgot-password"
+              <Link
+                href="/forget-password"
                 className="text-sm text-primary-600 hover:text-primary-500"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Submit */}

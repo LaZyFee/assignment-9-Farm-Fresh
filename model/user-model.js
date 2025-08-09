@@ -25,6 +25,8 @@ const UserSchema = new mongoose.Schema({
             return !this.googleId;
         },
     },
+    resetToken: String,
+    resetTokenExpiry: Date,
     phone: {
         type: String,
         required: true,
@@ -110,7 +112,7 @@ UserSchema.methods.comparePassword = async function (candidatePassword) {
 UserSchema.methods.generateResetToken = function () {
     const resetToken = require('crypto').randomBytes(32).toString('hex');
     this.resetToken = require('crypto').createHash('sha256').update(resetToken).digest('hex');
-    this.resetTokenExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+    this.resetTokenExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
     return resetToken;
 };
 
