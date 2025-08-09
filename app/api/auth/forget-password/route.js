@@ -4,17 +4,17 @@ import userModel from "@/model/user-model";
 import { sendResetEmail } from "@/lib/sendEmail";
 
 export async function POST(req) {
-    console.log("=== FORGET PASSWORD API CALLED ===");
+    // console.log("=== FORGET PASSWORD API CALLED ===");
 
     try {
         const body = await req.json();
         const { email } = body;
 
-        console.log("Request body:", body);
-        console.log("Email:", email);
+        // console.log("Request body:", body);
+        // console.log("Email:", email);
 
         if (!email) {
-            console.log("No email provided");
+            // console.log("No email provided");
             return new Response(
                 JSON.stringify({ error: "Email is required" }),
                 {
@@ -24,16 +24,16 @@ export async function POST(req) {
             );
         }
 
-        console.log("Connecting to database...");
+        // console.log("Connecting to database...");
         await dbConnect();
-        console.log("Database connected");
+        // console.log("Database connected");
 
-        console.log("Looking for user with email:", email);
+        // console.log("Looking for user with email:", email);
         const user = await userModel.findOne({ email });
-        console.log("User found:", user ? "YES" : "NO");
+        // console.log("User found:", user ? "YES" : "NO");
 
         if (!user) {
-            console.log("User not found, but sending generic response");
+            // console.log("User not found, but sending generic response");
             // Return generic message to prevent email enumeration
             return new Response(
                 JSON.stringify({ message: "If the email exists, a reset link has been sent" }),
@@ -44,16 +44,16 @@ export async function POST(req) {
             );
         }
 
-        console.log("Generating reset token...");
+        // console.log("Generating reset token...");
         // Generate and save reset token
         const resetToken = user.generateResetToken();
         await user.save();
-        console.log("Reset token generated and saved");
+        // console.log("Reset token generated and saved");
 
-        console.log("Sending reset email...");
+        // console.log("Sending reset email...");
         // Send reset email
         await sendResetEmail(email, resetToken);
-        console.log("Reset email sent successfully");
+        // console.log("Reset email sent successfully");
 
         return new Response(
             JSON.stringify({ message: "If the email exists, a reset link has been sent" }),

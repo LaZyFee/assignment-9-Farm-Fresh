@@ -24,6 +24,8 @@ export async function POST(req) {
             resetToken: hashedToken,
             resetTokenExpiry: { $gt: Date.now() },
         });
+        // console.log("User found with reset token:", !!user);
+
 
         if (!user) {
             return new Response(
@@ -32,14 +34,19 @@ export async function POST(req) {
             );
         }
 
-        // Hash the new password
-        const hashedPassword = await bcrypt.hash(password, 10);
+
 
         // Update user's password and clear reset token fields
-        user.password = hashedPassword;
+        user.password = password;
         user.resetToken = undefined;
         user.resetTokenExpiry = undefined;
-        await user.save();
+        try {
+            await user.save();
+            // console.log("User password updated and reset token cleared");
+        } catch (err) {
+            console.error("Error saving user:", err);
+            throw err;
+        }
 
         return new Response(
             JSON.stringify({ message: "Password reset successful" }),

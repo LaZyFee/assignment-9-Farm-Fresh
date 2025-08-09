@@ -11,15 +11,15 @@ export default auth((req) => {
 
     // IMPORTANT: Skip middleware for all API routes
     if (nextUrl.pathname.startsWith('/api/')) {
-        console.log("Skipping middleware for API route:", nextUrl.pathname);
+        // console.log("Skipping middleware for API route:", nextUrl.pathname);
         return;
     }
 
-    console.log({
-        isAuthenticated,
-        pathname: nextUrl.pathname,
-        auth: req.auth,
-    });
+    // console.log({
+    //     isAuthenticated,
+    //     pathname: nextUrl.pathname,
+    //     auth: req.auth,
+    // });
 
     const isPublicRoute = PUBLIC_ROUTES.find((route) =>
         nextUrl.pathname.startsWith(route)
@@ -28,7 +28,7 @@ export default auth((req) => {
     console.log({ isPublicRoute });
 
     if (!isAuthenticated && !isPublicRoute) {
-        console.log("Redirecting to login from:", nextUrl.pathname);
+        // console.log("Redirecting to login from:", nextUrl.pathname);
         return Response.redirect(new URL(LOGIN, nextUrl));
     }
 });
