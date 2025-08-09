@@ -1,6 +1,6 @@
 import { dbConnect } from "@/service/mongo";
 import userModel from "@/model/user-model";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 export async function POST(req) {

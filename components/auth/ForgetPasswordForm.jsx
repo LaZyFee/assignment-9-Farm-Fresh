@@ -23,7 +23,8 @@ export default function ForgotPasswordForm() {
     }
 
     try {
-      const response = await fetch("/api/forgot-password", {
+      // Fixed API endpoint path
+      const response = await fetch("/api/auth/forget-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,14 +33,17 @@ export default function ForgotPasswordForm() {
       });
 
       const data = await response.json();
+      console.log("API response:", { status: response.status, data });
 
       if (response.ok) {
         setMessage(data.message);
         setEmail("");
       } else {
+        console.log("API error:", data.error);
         setError(data.error || "Something went wrong");
       }
     } catch (error) {
+      console.error("Fetch error:", error);
       setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
