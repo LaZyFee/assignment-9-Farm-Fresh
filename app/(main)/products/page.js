@@ -7,22 +7,39 @@ import Link from "next/link";
 export default function ProductsPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         async function fetchProducts() {
             try {
-                const res = await fetch("/api/products");
-                if (!res.ok) throw new Error("Failed to fetch products");
+                const res = await fetch("/api/products", {
+                    cache: "no-store",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                });
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
                 const data = await res.json();
-                setProducts(data);
+                setProducts(Array.isArray(data) ? data : []);
             } catch (err) {
-                console.error(err);
+                console.error("Fetch error:", err);
+                setError(`Failed to load products: ${err.message}`);
             } finally {
                 setLoading(false);
             }
         }
         fetchProducts();
     }, []);
+
+    if (error) {
+        return (
+            <div className="text-center py-10 text-red-500">
+                {error}
+            </div>
+        );
+    }
 
     if (loading) {
         return (
@@ -47,8 +64,7 @@ export default function ProductsPage() {
                             key={product._id}
                             className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-lg transition"
                         >
-                            {/* Image */}
-                            {product.images?.[0] && (
+                            {product.images?.[0] ? (
                                 <div className="relative w-full h-48">
                                     <Image
                                         src={product.images[0]}
@@ -57,9 +73,11 @@ export default function ProductsPage() {
                                         className="object-cover"
                                     />
                                 </div>
+                            ) : (
+                                <div className="relative w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                    <span className="text-gray-500">No image</span>
+                                </div>
                             )}
-
-                            {/* Content */}
                             <div className="p-5">
                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                     {product.productName}

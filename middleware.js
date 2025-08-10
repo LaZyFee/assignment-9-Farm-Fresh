@@ -31,19 +31,19 @@ export default auth((req) => {
         return nextUrl.pathname === route || nextUrl.pathname.startsWith(route + '/');
     }) || nextUrl.pathname === ROOT;
 
-    console.log('Middleware Debug:', {
-        pathname: nextUrl.pathname,
-        isAuthenticated,
-        isPublicRoute,
-        matchedRoutes: PUBLIC_ROUTES.filter(route => {
-            if (route.includes('[id]')) {
-                const routePattern = route.replace('[id]', '[^/]+');
-                const regex = new RegExp(`^${routePattern}$`);
-                return regex.test(nextUrl.pathname);
-            }
-            return nextUrl.pathname === route || nextUrl.pathname.startsWith(route + '/');
-        })
-    });
+    // console.log('Middleware Debug:', {
+    //     pathname: nextUrl.pathname,
+    //     isAuthenticated,
+    //     isPublicRoute,
+    //     matchedRoutes: PUBLIC_ROUTES.filter(route => {
+    //         if (route.includes('[id]')) {
+    //             const routePattern = route.replace('[id]', '[^/]+');
+    //             const regex = new RegExp(`^${routePattern}$`);
+    //             return regex.test(nextUrl.pathname);
+    //         }
+    //         return nextUrl.pathname === route || nextUrl.pathname.startsWith(route + '/');
+    //     })
+    // });
 
     // Check authentication for protected routes
     if (!isAuthenticated && !isPublicRoute) {

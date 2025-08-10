@@ -34,7 +34,7 @@ export async function POST(req) {
         let savedImagePaths = [];
 
         for (const image of images) {
-            if (typeof image === "string") continue; // skip invalid
+            if (typeof image === "string") continue;
 
             const arrayBuffer = await image.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
@@ -70,6 +70,20 @@ export async function POST(req) {
         console.error("Error creating product:", error);
         return NextResponse.json(
             { error: "Failed to create product" },
+            { status: 500 }
+        );
+    }
+}
+export async function GET(req) {
+    try {
+        await dbConnect();
+        const products = await Product.find({});
+        console.log("API returning products:", products);
+        return NextResponse.json(products);
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return NextResponse.json(
+            { error: "Failed to fetch products" },
             { status: 500 }
         );
     }
