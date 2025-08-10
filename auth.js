@@ -171,6 +171,7 @@ export const {
                         email: user.email,
                         name: dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : user.name,
                         image: dbUser?.profilePicture || user.image,
+                        userType: dbUser?.userType || "customer",
                         accessToken: account.access_token,
                         accessTokenExpires: Date.now() + account.expires_in * 1000,
                         refreshToken: account.refresh_token,
@@ -205,43 +206,32 @@ export const {
                 session.error = token.error;
             }
 
-            // different token structures
-            let userData;
+            await dbConnect();
+            const dbUser = await userModel.findOne({ email: token.email }).lean();
+            // console.log("Session Callback - DB User:", dbUser);
 
-            if (token.loginType === "credentials") {
-                if (token.user && token.user._doc) {
-                    userData = token.user._doc;
-                } else {
-                    userData = token;
-                }
-
+            // Always fetch fresh user data from database to ensure consistency
+            if (dbUser) {
                 session.user = {
-                    id: token.sub || token.id,
-                    name: `${userData.firstName} ${userData.lastName}`,
-                    email: userData.email,
-                    image: userData.profilePicture || null,
-                    firstName: userData.firstName,
-                    lastName: userData.lastName,
-                    userType: userData.userType,
-                    phone: userData.phone,
-                    address: userData.address,
-                    bio: userData.bio
-                };
-            } else if (token.loginType === "google") {
-                // Google login structure
-                session.user = {
-                    id: token.id || token.sub,
-                    name: token.name,
-                    email: token.email,
-                    image: token.image || null
+                    id: dbUser._id.toString(),
+                    name: `${dbUser.firstName} ${dbUser.lastName}`,
+                    email: dbUser.email,
+                    image: dbUser.profilePicture || token.image || null,
+                    firstName: dbUser.firstName,
+                    lastName: dbUser.lastName,
+                    userType: dbUser.userType,
+                    phone: dbUser.phone,
+                    address: dbUser.address,
+                    bio: dbUser.bio
                 };
             } else {
-                // Fallback for any other cases
+                // Fallback if no DB user found
                 session.user = {
                     id: token.sub || token.id,
                     name: token.name,
                     email: token.email,
-                    image: token.image || token.profilePicture || null
+                    image: token.image || token.profilePicture || null,
+                    userType: token.userType || 'customer'
                 };
             }
 
@@ -249,7 +239,7 @@ export const {
                 session.accessToken = token.accessToken;
             }
 
-            // console.log("Session Callback - Final session:", session);
+            // console.log("Session Callback - Final session user:", session.user);
             return session;
         }
     },

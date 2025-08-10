@@ -224,7 +224,7 @@ export default function LoginForm({ isModal = false }) {
           </h3>
           <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
             <div>
-              <strong>Customer:</strong> abc@gmail.com / 12345677
+              <strong>Customer:</strong> john@example.com / 123456789
             </div>
             <div>
               <strong>Farmer:</strong> lazyfeeunofficial@gmail.com / 1234567

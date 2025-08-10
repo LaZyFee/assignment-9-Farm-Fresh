@@ -87,7 +87,7 @@ export default function FarmersPage() {
         </div>
 
         {/* Search and Filter Controls */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700 p-6 mb-8">
+        <div className=" p-6 mb-8">
           <div className="flex flex-col lg:flex-row gap-4 items-center">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
@@ -141,13 +141,6 @@ export default function FarmersPage() {
                 <List className="w-5 h-5" />
               </button>
             </div>
-          </div>
-
-          {/* Results Count */}
-          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            {filteredFarmers.length === farmers.length
-              ? `Showing all ${farmers.length} farmers`
-              : `Found ${filteredFarmers.length} of ${farmers.length} farmers`}
           </div>
         </div>
 
