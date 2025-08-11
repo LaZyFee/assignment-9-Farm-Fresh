@@ -78,14 +78,23 @@ const UserSchema = new mongoose.Schema({
     googleId: {
         type: String,
         sparse: true,
+        unique: true,
     },
     emailVerified: {
+        type: Date,
+        default: null,
+    },
+    // Soft delete field
+    deletedAt: {
         type: Date,
         default: null,
     }
 }, {
     timestamps: true,
 });
+
+UserSchema.index({ userType: 1 });
+UserSchema.index({ deletedAt: 1 });
 
 // Hash password before saving
 UserSchema.pre('save', async function (next) {
@@ -112,6 +121,17 @@ UserSchema.methods.generateResetToken = function () {
     this.resetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
     this.resetTokenExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
     return resetToken;
+};
+
+// Soft delete method
+UserSchema.methods.softDelete = function () {
+    this.deletedAt = new Date();
+    return this.save();
+};
+
+// Query helper to exclude soft deleted documents
+UserSchema.query.notDeleted = function () {
+    return this.where({ deletedAt: null });
 };
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

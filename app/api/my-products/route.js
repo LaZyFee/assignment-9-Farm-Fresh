@@ -9,7 +9,7 @@ export async function GET(req) {
     try {
         // Step 1: Check authentication
         const session = await auth();
-        console.log("Session data:", session);
+        // console.log("Session data:", session);
         if (!session || !session.user || session.user.userType !== "farmer") {
             console.error("Unauthorized access attempt:", { session });
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,12 +17,12 @@ export async function GET(req) {
 
         // Step 2: Connect to database
         await dbConnect();
-        console.log("Connected to MongoDB for GET request");
+        // console.log("Connected to MongoDB for GET request");
 
         // Step 3: Build query
         const { searchParams } = new URL(req.url);
         const query = { farmer: session.user.id };
-        console.log("Query base:", query);
+        // console.log("Query base:", query);
 
         // Search by name/description
         const search = searchParams.get("search");
@@ -45,11 +45,11 @@ export async function GET(req) {
             if (status === "Out of Stock") query.stock = 0;
             if (status === "Low Stock") query.stock = { $gt: 0, $lt: 10 };
         }
-        console.log("Final query:", query);
+        // console.log("Final query:", query);
 
         // Step 4: Execute query
         const products = await Product.find(query).sort({ createdAt: -1 });
-        console.log("Products fetched:", products.length);
+        // console.log("Products fetched:", products.length);
         return NextResponse.json(products);
     } catch (error) {
         console.error("GET /api/my-products error:", {
@@ -66,14 +66,14 @@ export async function GET(req) {
 export async function PATCH(req) {
     try {
         const session = await auth();
-        console.log("Session data for PATCH:", session);
+        // console.log("Session data for PATCH:", session);
         if (!session || !session.user || session.user.userType !== "farmer") {
             console.error("Unauthorized PATCH attempt:", { session });
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         await dbConnect();
-        console.log("Connected to MongoDB for PATCH request");
+        // console.log("Connected to MongoDB for PATCH request");
 
         const { searchParams } = new URL(req.url);
         const productId = searchParams.get("id");
@@ -93,7 +93,7 @@ export async function PATCH(req) {
         if (action === "toggle") {
             product.status = product.status === "active" ? "inactive" : "active";
             await product.save();
-            console.log("Status toggled for product:", productId);
+            // console.log("Status toggled for product:", productId);
             return NextResponse.json({ message: "Status toggled", product });
         }
 
@@ -131,10 +131,10 @@ export async function PATCH(req) {
         }
         if (images.length > 0) updates.images = newImagePaths;
 
-        console.log("Applying updates:", updates);
+        // console.log("Applying updates:", updates);
         await Product.updateOne({ _id: productId }, { $set: updates });
         const updatedProduct = await Product.findById(productId);
-        console.log("Product updated:", productId);
+        // console.log("Product updated:", productId);
         return NextResponse.json({ message: "Product updated", product: updatedProduct });
     } catch (error) {
         console.error("PATCH /api/my-products error:", {
@@ -151,14 +151,14 @@ export async function PATCH(req) {
 export async function DELETE(req) {
     try {
         const session = await auth();
-        console.log("Session data for DELETE:", session);
+        // console.log("Session data for DELETE:", session);
         if (!session || !session.user || session.user.userType !== "farmer") {
             console.error("Unauthorized DELETE attempt:", { session });
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         await dbConnect();
-        console.log("Connected to MongoDB for DELETE request");
+        // console.log("Connected to MongoDB for DELETE request");
 
         const { searchParams } = new URL(req.url);
         const productId = searchParams.get("id");
@@ -179,7 +179,7 @@ export async function DELETE(req) {
         });
 
         await Product.deleteOne({ _id: productId });
-        console.log("Product deleted:", productId);
+        // console.log("Product deleted:", productId);
         return NextResponse.json({ message: "Product deleted" });
     } catch (error) {
         console.error("DELETE /api/my-products error:", {

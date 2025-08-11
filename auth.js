@@ -57,7 +57,6 @@ export const {
 
                 try {
                     await dbConnect();
-                    // console.log("Looking up user with email:", credentials.email);
                     const user = await userModel.findOne({ email: credentials.email }).lean();
 
                     if (!user) {
@@ -65,7 +64,6 @@ export const {
                         throw new Error("User not found");
                     }
 
-                    // console.log("Comparing passwords for user:", user.email);
                     const isMatch = await bcrypt.compare(credentials.password, user.password);
 
                     if (!isMatch) {
@@ -73,7 +71,7 @@ export const {
                         throw new Error("Check your password");
                     }
 
-                    // console.log("User authenticated successfully:", user.email);
+                    // Return complete user object with all fields
                     return {
                         id: user._id.toString(),
                         email: user.email,
@@ -84,7 +82,15 @@ export const {
                         userType: user.userType,
                         phone: user.phone,
                         address: user.address,
-                        bio: user.bio
+                        bio: user.bio,
+                        // Farmer-specific fields
+                        farmName: user.farmName,
+                        specialization: user.specialization,
+                        farmSize: user.farmSize,
+                        // Date fields
+                        createdAt: user.createdAt,
+                        updatedAt: user.updatedAt,
+                        emailVerified: user.emailVerified
                     };
                 } catch (err) {
                     console.error("Authorize error:", err);
@@ -136,14 +142,9 @@ export const {
         },
 
         async jwt({ token, user, account }) {
-            // console.log("JWT Callback - Initial token:", token);
-            // console.log("JWT Callback - User:", user);
-            // console.log("JWT Callback - Account:", account);
-
             // Initial sign in
             if (account && user) {
                 if (account.type === "credentials") {
-                    // console.log("JWT Callback - Processing credentials login");
                     return {
                         ...token,
                         id: user.id,
@@ -156,12 +157,20 @@ export const {
                         phone: user.phone,
                         address: user.address,
                         bio: user.bio,
+                        // Farmer-specific fields
+                        farmName: user.farmName,
+                        specialization: user.specialization,
+                        farmSize: user.farmSize,
+                        // Date fields
+                        createdAt: user.createdAt,
+                        updatedAt: user.updatedAt,
+                        emailVerified: user.emailVerified,
                         loginType: "credentials",
                     };
                 }
 
                 if (account.provider === "google") {
-                    // Fetch from DB to ensure ID and image are set
+                    // Fetch from DB to ensure all fields are available
                     await dbConnect();
                     const dbUser = await userModel.findOne({ email: user.email }).lean();
 
@@ -171,28 +180,38 @@ export const {
                         email: user.email,
                         name: dbUser ? `${dbUser.firstName} ${dbUser.lastName}` : user.name,
                         image: dbUser?.profilePicture || user.image,
+                        firstName: dbUser?.firstName,
+                        lastName: dbUser?.lastName,
                         userType: dbUser?.userType || "customer",
+                        phone: dbUser?.phone,
+                        address: dbUser?.address,
+                        bio: dbUser?.bio,
+                        // Farmer-specific fields
+                        farmName: dbUser?.farmName,
+                        specialization: dbUser?.specialization,
+                        farmSize: dbUser?.farmSize,
+                        // Date fields
+                        createdAt: dbUser?.createdAt,
+                        updatedAt: dbUser?.updatedAt,
+                        emailVerified: dbUser?.emailVerified,
+                        // Google-specific fields
                         accessToken: account.access_token,
                         accessTokenExpires: Date.now() + account.expires_in * 1000,
                         refreshToken: account.refresh_token,
                         loginType: "google",
                     };
                 }
-
             }
 
             if (token.loginType === "credentials") {
-                // console.log("JWT Callback - Returning existing credentials token");
                 return token;
             }
 
             // Google token refresh
             if (token.loginType === "google") {
                 if (Date.now() < token.accessTokenExpires) {
-                    // console.log("JWT Callback - Google token still valid");
                     return token;
                 }
-                // console.log("JWT Callback - Refreshing Google token");
                 return await refreshAccessToken(token);
             }
 
@@ -200,15 +219,12 @@ export const {
         },
 
         async session({ session, token }) {
-            // console.log("Session Callback - Token:", token);
-
             if (token?.error === "RefreshAccessTokenError") {
                 session.error = token.error;
             }
 
             await dbConnect();
             const dbUser = await userModel.findOne({ email: token.email }).lean();
-            // console.log("Session Callback - DB User:", dbUser);
 
             // Always fetch fresh user data from database to ensure consistency
             if (dbUser) {
@@ -217,12 +233,21 @@ export const {
                     name: `${dbUser.firstName} ${dbUser.lastName}`,
                     email: dbUser.email,
                     image: dbUser.profilePicture || token.image || null,
+                    profilePicture: dbUser.profilePicture || token.image || null, // Add both for compatibility
                     firstName: dbUser.firstName,
                     lastName: dbUser.lastName,
                     userType: dbUser.userType,
                     phone: dbUser.phone,
                     address: dbUser.address,
-                    bio: dbUser.bio
+                    bio: dbUser.bio,
+                    // Farmer-specific fields
+                    farmName: dbUser.farmName,
+                    specialization: dbUser.specialization,
+                    farmSize: dbUser.farmSize,
+                    // Date fields
+                    createdAt: dbUser.createdAt,
+                    updatedAt: dbUser.updatedAt,
+                    emailVerified: dbUser.emailVerified
                 };
             } else {
                 // Fallback if no DB user found
@@ -231,7 +256,21 @@ export const {
                     name: token.name,
                     email: token.email,
                     image: token.image || token.profilePicture || null,
-                    userType: token.userType || 'customer'
+                    profilePicture: token.profilePicture || token.image || null,
+                    firstName: token.firstName,
+                    lastName: token.lastName,
+                    userType: token.userType || 'customer',
+                    phone: token.phone,
+                    address: token.address,
+                    bio: token.bio,
+                    // Farmer-specific fields
+                    farmName: token.farmName,
+                    specialization: token.specialization,
+                    farmSize: token.farmSize,
+                    // Date fields
+                    createdAt: token.createdAt,
+                    updatedAt: token.updatedAt,
+                    emailVerified: token.emailVerified
                 };
             }
 
@@ -239,7 +278,6 @@ export const {
                 session.accessToken = token.accessToken;
             }
 
-            // console.log("Session Callback - Final session user:", session.user);
             return session;
         }
     },
