@@ -1,5 +1,7 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import React from 'react'
+import { FaArrowRight, FaHeart, FaStar } from 'react-icons/fa'
 
 export const FeaturedProduct = () => {
     return (
@@ -16,12 +18,12 @@ export const FeaturedProduct = () => {
                             Fresh picks from our local farmers
                         </p>
                     </div>
-                    <a
-                        href="products.html"
-                        className="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300"
+                    <Link
+                        href="/products"
+                        className="text-primary-600 dark:text-primary-400 font-medium hover:text-primary-700 dark:hover:text-primary-300 flex items-center"
                     >
-                        View All <i className="fas fa-arrow-right ml-1"></i>
-                    </a>
+                        View All <FaArrowRight className="ml-1"></FaArrowRight>
+                    </Link>
                 </div>
 
                 <div
@@ -49,9 +51,9 @@ export const FeaturedProduct = () => {
                                 <button
                                     className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                 >
-                                    <i
-                                        className="far fa-heart text-gray-600 dark:text-gray-400"
-                                    ></i>
+                                    <FaHeart
+                                        className="text-gray-600 dark:text-gray-400"
+                                    ></FaHeart>
                                 </button>
                             </div>
                         </div>
@@ -63,7 +65,7 @@ export const FeaturedProduct = () => {
                                     Fresh Tomatoes
                                 </h3>
                                 <div className="flex items-center text-yellow-400">
-                                    <i className="fas fa-star text-sm"></i>
+                                    <FaStar className="text-sm"></FaStar>
                                     <span
                                         className="text-sm text-gray-600 dark:text-gray-400 ml-1"
                                     >4.8</span
@@ -115,9 +117,9 @@ export const FeaturedProduct = () => {
                                 <button
                                     className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                 >
-                                    <i
-                                        className="far fa-heart text-gray-600 dark:text-gray-400"
-                                    ></i>
+                                    <FaHeart
+                                        className="text-gray-600 dark:text-gray-400"
+                                    ></FaHeart>
                                 </button>
                             </div>
                         </div>
@@ -129,7 +131,7 @@ export const FeaturedProduct = () => {
                                     Fresh Carrots
                                 </h3>
                                 <div className="flex items-center text-yellow-400">
-                                    <i className="fas fa-star text-sm"></i>
+                                    <FaStar className="fas fa-star text-sm"></FaStar>
                                     <span
                                         className="text-sm text-gray-600 dark:text-gray-400 ml-1"
                                     >4.9</span
@@ -187,7 +189,7 @@ export const FeaturedProduct = () => {
                                 <button
                                     className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                 >
-                                    <i className="fas fa-heart text-red-500"></i>
+                                    <FaHeart className="fas fa-heart text-red-500"></FaHeart>
                                 </button>
                             </div>
                         </div>

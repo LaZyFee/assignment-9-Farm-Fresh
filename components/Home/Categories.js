@@ -1,130 +1,78 @@
-import React from 'react'
+import React from "react";
+import { FaLeaf, FaSeedling } from "react-icons/fa";
+import { FaApple, FaCarrot, FaCheese, FaJar } from "react-icons/fa6";
 
 export const Categories = () => {
+    const categories = [
+        {
+            icon: <FaCarrot className="text-4xl text-green-600 dark:text-green-400" />,
+            name: "Vegetables",
+            count: "150+ items",
+            bg: "green",
+        },
+        {
+            icon: <FaApple className="text-4xl text-red-600 dark:text-red-400" />,
+            name: "Fruits",
+            count: "80+ items",
+            bg: "red",
+        },
+        {
+            icon: <FaSeedling className="text-4xl text-yellow-600 dark:text-yellow-400" />,
+            name: "Grains",
+            count: "45+ items",
+            bg: "yellow",
+        },
+        {
+            icon: <FaCheese className="text-4xl text-blue-600 dark:text-blue-400" />,
+            name: "Dairy",
+            count: "25+ items",
+            bg: "blue",
+        },
+        {
+            icon: <FaJar className="text-4xl text-purple-600 dark:text-purple-400" />,
+            name: "Honey",
+            count: "15+ items",
+            bg: "purple",
+        },
+        {
+            icon: <FaLeaf className="text-4xl text-orange-600 dark:text-orange-400" />,
+            name: "Herbs",
+            count: "30+ items",
+            bg: "orange",
+        },
+    ];
+
     return (
         <section className="py-16 bg-white dark:bg-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Section Heading */}
                 <div className="text-center mb-12">
-                    <h2
-                        className="text-3xl font-bold text-gray-900 dark:text-white mb-4"
-                    >
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
                         Shop by Category
                     </h2>
-                    <p
-                        className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
-                    >
-                        Discover fresh, locally-sourced produce across various
-                        categories
+                    <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                        Discover fresh, locally-sourced produce across various categories
                     </p>
                 </div>
 
-                <div
-                    className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6"
-                >
-                    <div className="group cursor-pointer">
+                {/* Categories Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                    {categories.map((cat, idx) => (
                         <div
-                            className="bg-green-100 dark:bg-green-900 rounded-2xl p-6 text-center group-hover:bg-green-200 dark:group-hover:bg-green-800 transition"
+                            key={idx}
+                            className={`group cursor-pointer bg-${cat.bg}-100 dark:bg-${cat.bg}-900 rounded-2xl p-6 flex flex-col items-center justify-center text-center min-h-[160px] hover:bg-${cat.bg}-200 dark:hover:bg-${cat.bg}-800 transition transform hover:scale-105 shadow-sm hover:shadow-lg`}
                         >
-                            <i
-                                className="fas fa-carrot text-3xl text-green-600 dark:text-green-400 mb-3"
-                            ></i>
-                            <h3
-                                className="font-semibold text-gray-900 dark:text-white"
-                            >
-                                Vegetables
+                            <div className="mb-3">{cat.icon}</div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                                {cat.name}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                150+ items
+                                {cat.count}
                             </p>
                         </div>
-                    </div>
-                    <div className="group cursor-pointer">
-                        <div
-                            className="bg-red-100 dark:bg-red-900 rounded-2xl p-6 text-center group-hover:bg-red-200 dark:group-hover:bg-red-800 transition"
-                        >
-                            <i
-                                className="fas fa-apple-alt text-3xl text-red-600 dark:text-red-400 mb-3"
-                            ></i>
-                            <h3
-                                className="font-semibold text-gray-900 dark:text-white"
-                            >
-                                Fruits
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                80+ items
-                            </p>
-                        </div>
-                    </div>
-                    <div className="group cursor-pointer">
-                        <div
-                            className="bg-yellow-100 dark:bg-yellow-900 rounded-2xl p-6 text-center group-hover:bg-yellow-200 dark:group-hover:bg-yellow-800 transition"
-                        >
-                            <i
-                                className="fas fa-seedling text-3xl text-yellow-600 dark:text-yellow-400 mb-3"
-                            ></i>
-                            <h3
-                                className="font-semibold text-gray-900 dark:text-white"
-                            >
-                                Grains
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                45+ items
-                            </p>
-                        </div>
-                    </div>
-                    <div className="group cursor-pointer">
-                        <div
-                            className="bg-blue-100 dark:bg-blue-900 rounded-2xl p-6 text-center group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition"
-                        >
-                            <i
-                                className="fas fa-cheese text-3xl text-blue-600 dark:text-blue-400 mb-3"
-                            ></i>
-                            <h3
-                                className="font-semibold text-gray-900 dark:text-white"
-                            >
-                                Dairy
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                25+ items
-                            </p>
-                        </div>
-                    </div>
-                    <div className="group cursor-pointer">
-                        <div
-                            className="bg-purple-100 dark:bg-purple-900 rounded-2xl p-6 text-center group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition"
-                        >
-                            <i
-                                className="fas fa-jar text-3xl text-purple-600 dark:text-purple-400 mb-3"
-                            ></i>
-                            <h3
-                                className="font-semibold text-gray-900 dark:text-white"
-                            >
-                                Honey
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                15+ items
-                            </p>
-                        </div>
-                    </div>
-                    <div className="group cursor-pointer">
-                        <div
-                            className="bg-orange-100 dark:bg-orange-900 rounded-2xl p-6 text-center group-hover:bg-orange-200 dark:group-hover:bg-orange-800 transition"
-                        >
-                            <i
-                                className="fas fa-leaf text-3xl text-orange-600 dark:text-orange-400 mb-3"
-                            ></i>
-                            <h3
-                                className="font-semibold text-gray-900 dark:text-white"
-                            >
-                                Herbs
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                30+ items
-                            </p>
-                        </div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </section>
-    )
-}
+    );
+};

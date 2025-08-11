@@ -4,6 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { credentialLogin, doSocialLogin } from "@/app/actions";
+import {
+  FaEnvelope,
+  FaEye,
+  FaEyeSlash,
+  FaGoogle,
+  FaLock,
+  FaSeedling,
+} from "react-icons/fa";
 export default function LoginForm({ isModal = false }) {
   const router = useRouter();
 
@@ -77,7 +85,7 @@ export default function LoginForm({ isModal = false }) {
         <div className="text-center">
           <div className="flex justify-center mb-6">
             <div className="bg-primary-500 p-3 rounded-full">
-              <i className="fas fa-seedling text-white text-2xl"></i>
+              <FaSeedling className="text-white text-2xl"></FaSeedling>
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -110,7 +118,7 @@ export default function LoginForm({ isModal = false }) {
                   className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                   placeholder="john@example.com"
                 />
-                <i className="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+                <FaEnvelope className="absolute left-3 top-3.5 text-gray-400"></FaEnvelope>
               </div>
             </div>
 
@@ -133,17 +141,17 @@ export default function LoginForm({ isModal = false }) {
                   className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                   placeholder="••••••••"
                 />
-                <i className="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+                <FaLock className="absolute left-3 top-3.5 text-gray-400"></FaLock>
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                 >
-                  <i
-                    className={`fas ${
-                      showPassword ? "fa-eye-slash" : "fa-eye"
-                    } text-gray-400 hover:text-gray-600`}
-                  ></i>
+                  {showPassword ? (
+                    <FaEyeSlash className="text-gray-400 hover:text-gray-600" />
+                  ) : (
+                    <FaEye className="text-gray-400 hover:text-gray-600" />
+                  )}
                 </button>
               </div>
             </div>
@@ -198,7 +206,7 @@ export default function LoginForm({ isModal = false }) {
               disabled={isLoading}
               className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-200 flex items-center justify-center space-x-2"
             >
-              <i className="fab fa-google text-red-500"></i>
+              <FaGoogle className="text-red-500"></FaGoogle>
               <span>{isLoading ? "Loading..." : "Continue with Google"}</span>
             </button>
           </form>

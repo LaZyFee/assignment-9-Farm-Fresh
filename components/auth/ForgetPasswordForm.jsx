@@ -3,6 +3,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import {
+  FaArrowLeft,
+  FaCheckCircle,
+  FaEnvelope,
+  FaInfoCircle,
+  FaKey,
+  FaPaperPlane,
+  FaSpinner,
+} from "react-icons/fa";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -55,7 +64,7 @@ export default function ForgotPasswordForm() {
       <div className="text-center mb-8">
         <div className="flex justify-center mb-6">
           <div className="bg-green-500 p-3 rounded-full">
-            <i className="fas fa-key text-white text-2xl"></i>
+            <FaKey className=" text-white text-2xl"></FaKey>
           </div>
         </div>
         <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -77,7 +86,7 @@ export default function ForgotPasswordForm() {
         {message && (
           <div className="mb-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
             <div className="flex items-center">
-              <i className="fas fa-check-circle text-green-500 mr-3"></i>
+              <FaCheckCircle className=" text-green-500 mr-3"></FaCheckCircle>
               <div>
                 <h4 className="text-green-800 dark:text-green-200 font-medium">
                   Email sent successfully!
@@ -109,7 +118,7 @@ export default function ForgotPasswordForm() {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
                 placeholder="john@example.com"
               />
-              <i className="fas fa-envelope absolute left-3 top-3.5 text-gray-400"></i>
+              <FaEnvelope className="absolute left-3 top-3.5 text-gray-400"></FaEnvelope>
             </div>
           </div>
 
@@ -120,12 +129,12 @@ export default function ForgotPasswordForm() {
           >
             {isLoading ? (
               <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
+                <FaSpinner className="mr-2"></FaSpinner>
                 Sending...
               </>
             ) : (
               <>
-                <i className="fas fa-paper-plane mr-2"></i>
+                <FaPaperPlane className="mr-2"></FaPaperPlane>
                 Send Reset Link
               </>
             )}
@@ -138,7 +147,7 @@ export default function ForgotPasswordForm() {
             href="/login"
             className="inline-flex items-center text-sm text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300"
           >
-            <i className="fas fa-arrow-left mr-2"></i>
+            <FaArrowLeft className="mr-2"></FaArrowLeft>
             Back to login
           </Link>
         </div>
@@ -147,7 +156,7 @@ export default function ForgotPasswordForm() {
       {/* Additional Help */}
       <div className="mt-6 bg-blue-50 dark:bg-blue-900 p-4 rounded-lg">
         <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-          <i className="fas fa-info-circle mr-2"></i>
+          <FaInfoCircle className="fas fa-info-circle mr-2"></FaInfoCircle>
           Need help?
         </h3>
         <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">

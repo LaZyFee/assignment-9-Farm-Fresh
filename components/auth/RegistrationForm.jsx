@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { doSocialLogin, registerUser } from "@/app/actions";
+import { FaCamera, FaGoogle, FaSeedling, FaUser } from "react-icons/fa";
+import { FaEye, FaTractor } from "react-icons/fa6";
 
 export default function RegisterForm({ isModal = false }) {
   const [userType, setUserType] = useState("customer");
@@ -80,7 +82,7 @@ export default function RegisterForm({ isModal = false }) {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <div className="bg-primary-500 p-3 rounded-full">
-              <i className="fas fa-seedling text-white text-2xl"></i>
+              <FaSeedling className="text-white text-2xl"></FaSeedling>
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -123,7 +125,7 @@ export default function RegisterForm({ isModal = false }) {
                     />
                     <div className="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900 hover:border-primary-300 dark:hover:border-primary-400 transition-all duration-200">
                       <div className="text-center">
-                        <i className="fas fa-user text-2xl mb-3 text-gray-600 dark:text-gray-400 peer-checked:text-primary-600 group-hover:text-primary-500 transition-colors"></i>
+                        <FaUser className="fas fa-user text-2xl mb-3 text-gray-600 dark:text-gray-400 peer-checked:text-primary-600 group-hover:text-primary-500 transition-colors"></FaUser>
                         <div className="font-semibold text-gray-900 dark:text-white peer-checked:text-primary-700 dark:peer-checked:text-primary-300">
                           Customer
                         </div>
@@ -143,7 +145,7 @@ export default function RegisterForm({ isModal = false }) {
                     />
                     <div className="p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer peer-checked:border-primary-500 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900 hover:border-primary-300 dark:hover:border-primary-400 transition-all duration-200">
                       <div className="text-center">
-                        <i className="fas fa-tractor text-2xl mb-3 text-gray-600 dark:text-gray-400 peer-checked:text-primary-600 group-hover:text-primary-500 transition-colors"></i>
+                        <FaTractor className="fas fa-tractor text-2xl mb-3 text-gray-600 dark:text-gray-400 peer-checked:text-primary-600 group-hover:text-primary-500 transition-colors"></FaTractor>
                         <div className="font-semibold text-gray-900 dark:text-white peer-checked:text-primary-700 dark:peer-checked:text-primary-300">
                           Farmer
                         </div>
@@ -178,7 +180,7 @@ export default function RegisterForm({ isModal = false }) {
                       className="relative cursor-pointer bg-white dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600 py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500 transition block text-center"
                     >
                       <span className="flex items-center justify-center">
-                        <i className="fas fa-camera mr-2"></i>
+                        <FaCamera className="mr-2"></FaCamera>
                         Choose photo
                       </span>
                       <input
@@ -274,7 +276,7 @@ export default function RegisterForm({ isModal = false }) {
                             input.type === "password" ? "text" : "password";
                         }}
                       >
-                        <i className="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                        <FaEye className="text-gray-400 hover:text-gray-600"></FaEye>
                       </button>
                     </div>
                   </div>
@@ -367,7 +369,7 @@ export default function RegisterForm({ isModal = false }) {
                             input.type === "password" ? "text" : "password";
                         }}
                       >
-                        <i className="fas fa-eye text-gray-400 hover:text-gray-600"></i>
+                        <FaEye className="fas fa-eye text-gray-400 hover:text-gray-600"></FaEye>
                       </button>
                     </div>
                   </div>
@@ -507,7 +509,7 @@ export default function RegisterForm({ isModal = false }) {
               onClick={handleGoogleLogin}
               className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-600 transition duration-200 flex items-center justify-center space-x-2 mt-4"
             >
-              <i className="fab fa-google text-red-500"></i>
+              <FaGoogle className="text-red-500"></FaGoogle>
               <span>Continue with Google</span>
             </button>
 

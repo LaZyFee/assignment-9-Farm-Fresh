@@ -1,5 +1,11 @@
 import Link from "next/link";
 import React from "react";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaSeedling,
+  FaTwitter,
+} from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -9,7 +15,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="bg-primary-500 p-2 rounded-lg">
-                <i className="fas fa-seedling text-white text-xl"></i>
+                <FaSeedling className="fas fa-seedling text-white text-xl"></FaSeedling>
               </div>
               <div>
                 <h3 className="text-xl font-bold">FarmFresh</h3>
@@ -22,13 +28,13 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <Link href="#" className="text-gray-400 hover:text-white">
-                <i className="fab fa-facebook"></i>
+                <FaFacebookF />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white">
-                <i className="fab fa-twitter"></i>
+                <FaTwitter />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white">
-                <i className="fab fa-instagram"></i>
+                <FaInstagram />
               </Link>
             </div>
           </div>

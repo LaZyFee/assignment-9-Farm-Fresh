@@ -3,6 +3,16 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import {
+  FaArrowLeft,
+  FaCheck,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaEye,
+  FaEyeSlash,
+  FaLock,
+  FaSpinner,
+} from "react-icons/fa";
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -77,7 +87,7 @@ export default function ResetPasswordForm() {
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
         <div className="text-center">
           <div className="bg-red-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            <i className="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            <FaExclamationTriangle className="text-red-600 text-xl"></FaExclamationTriangle>
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
             Invalid Reset Link
@@ -100,7 +110,7 @@ export default function ResetPasswordForm() {
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
       <div className="text-center mb-6">
         <div className="bg-green-100 p-3 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-          <i className="fas fa-lock text-green-600 text-xl"></i>
+          <FaLock className="fas fa-lock text-green-600 text-xl"></FaLock>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
           Reset Password
@@ -119,7 +129,7 @@ export default function ResetPasswordForm() {
       {message && (
         <div className="mb-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
           <div className="flex items-center">
-            <i className="fas fa-check-circle text-green-500 mr-3"></i>
+            <FaCheckCircle className="text-green-500 mr-3"></FaCheckCircle>
             <p className="text-green-700 dark:text-green-300">{message}</p>
           </div>
         </div>
@@ -143,15 +153,17 @@ export default function ResetPasswordForm() {
               required
               className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             />
-            <i className="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+            <FaLock className="absolute left-3 top-3.5 text-gray-400"></FaLock>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
             >
-              <i
-                className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
-              ></i>
+              {showPassword ? (
+                <FaEyeSlash className="text-gray-400 hover:text-gray-600" />
+              ) : (
+                <FaEye className="text-gray-400 hover:text-gray-600" />
+              )}
             </button>
           </div>
         </div>
@@ -173,7 +185,7 @@ export default function ResetPasswordForm() {
               required
               className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white"
             />
-            <i className="fas fa-lock absolute left-3 top-3.5 text-gray-400"></i>
+            <FaLock className="absolute left-3 top-3.5 text-gray-400"></FaLock>
           </div>
         </div>
 
@@ -184,12 +196,12 @@ export default function ResetPasswordForm() {
         >
           {isLoading ? (
             <>
-              <i className="fas fa-spinner fa-spin mr-2"></i>
+              <FaSpinner className="animate-spin mr-2" />
               Resetting...
             </>
           ) : (
             <>
-              <i className="fas fa-check mr-2"></i>
+              <FaCheck className="mr-2" />
               Reset Password
             </>
           )}
@@ -201,7 +213,7 @@ export default function ResetPasswordForm() {
           href="/login"
           className="inline-flex items-center text-sm text-green-600 hover:text-green-500 dark:text-green-400 dark:hover:text-green-300"
         >
-          <i className="fas fa-arrow-left mr-2"></i>
+          <FaArrowLeft className="mr-2"></FaArrowLeft>
           Back to login
         </Link>
       </div>

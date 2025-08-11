@@ -4,7 +4,14 @@ import { useSession, signOut } from "next-auth/react";
 import useTheme from "@/hooks/useTheme";
 import Image from "next/image";
 import Link from "next/link";
-import { FaSun, FaMoon, FaBars, FaChevronDown } from "react-icons/fa";
+import {
+  FaSun,
+  FaMoon,
+  FaBars,
+  FaChevronDown,
+  FaSearch,
+  FaSeedling,
+} from "react-icons/fa";
 import { FaCartShopping } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 
@@ -53,7 +60,7 @@ const Navbar = ({ sideMenu }) => {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
             <div className="bg-green-500 p-2 rounded-lg">
-              <i className="fas fa-seedling text-white text-xl"></i>
+              <FaSeedling className="text-white text-xl"></FaSeedling>
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -87,7 +94,7 @@ const Navbar = ({ sideMenu }) => {
                     placeholder="Search products..."
                     className="w-64 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
-                  <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                  <FaSearch className="absolute left-3 top-3 text-gray-400"></FaSearch>
                 </div>
 
                 {/* Cart */}

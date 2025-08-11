@@ -6,6 +6,7 @@ import { ProductDetailsSkeleton } from '@/components/ProductDetailsSkeleton';
 import NotFound from './not-found';
 import ErrorComponent from './error';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function ProductDetailsPage() {
     const params = useParams();
@@ -54,15 +55,15 @@ export default function ProductDetailsPage() {
                 <nav className="mb-6">
                     <ol className="flex items-center space-x-2 text-sm">
                         <li>
-                            <a href="/" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+                            <Link href="/" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
                                 Home
-                            </a>
+                            </Link>
                         </li>
                         <li className="text-gray-400 dark:text-gray-600">/</li>
                         <li>
-                            <a href="/products" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+                            <Link href="/products" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
                                 Products
-                            </a>
+                            </Link>
                         </li>
                         <li className="text-gray-400 dark:text-gray-600">/</li>
                         <li className="text-gray-600 dark:text-gray-400 truncate">
@@ -72,14 +73,14 @@ export default function ProductDetailsPage() {
                 </nav>
 
                 {/* Main Content */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
+                <div className="rounded-2xl overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                         {/* Product Images */}
-                        <div className="bg-gray-50 dark:bg-gray-700/50 p-6 lg:p-8">
+                        <div className=" p-6 lg:p-8 h-fit">
                             {product.images?.length > 0 ? (
                                 <div className="space-y-4">
                                     {/* Main Image */}
-                                    <div className="relative w-full h-80 lg:h-96 rounded-xl overflow-hidden bg-white dark:bg-gray-800 shadow-lg">
+                                    <div className="relative w-full h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg">
                                         <Image
                                             src={product.images[0]}
                                             alt={product.productName}
