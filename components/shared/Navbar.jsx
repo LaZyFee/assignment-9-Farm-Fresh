@@ -5,11 +5,11 @@ import useTheme from "@/hooks/useTheme";
 import Image from "next/image";
 import Link from "next/link";
 import { FaSun, FaMoon, FaBars, FaChevronDown } from "react-icons/fa";
-import { FaCartShopping, FaHeart } from "react-icons/fa6";
+import { FaCartShopping } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 
 const Navbar = ({ sideMenu }) => {
-  const { theme, toggleTheme, mounted } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);

@@ -3,8 +3,13 @@ import { dbConnect } from "@/service/mongo";
 import Product from "@/model/product-model";
 import fs from "fs";
 import path from "path";
+import { auth } from "@/auth";
 
 export async function POST(req) {
+    const session = await auth();
+    if (!session || session.user.userType !== "farmer") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     try {
         await dbConnect();
 
@@ -47,7 +52,6 @@ export async function POST(req) {
             // Store relative path for DB
             savedImagePaths.push(`/uploads/${fileName}`);
         }
-
         // Save to DB
         const newProduct = await Product.create({
             productName,
@@ -60,6 +64,10 @@ export async function POST(req) {
             farmLocation,
             harvestDate,
             features,
+            farmer: session.user.id || session.user._id,
+            status: "active",
+            rating: 0,
+            reviewsCount: 0
         });
 
         return NextResponse.json(
@@ -78,7 +86,7 @@ export async function GET(req) {
     try {
         await dbConnect();
         const products = await Product.find({});
-        console.log("API returning products:", products);
+        // console.log("API returning products:", products);
         return NextResponse.json(products);
     } catch (error) {
         console.error("Error fetching products:", error);

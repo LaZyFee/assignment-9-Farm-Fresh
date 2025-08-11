@@ -1,11 +1,12 @@
 "use client";
 
-import ManageProducts from "@/components/ManageProducts";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import EditProductForm from "@/components/EditProductForm";
 
-export default function ManageProductsPage() {
+export default function EditProductPage({ params }) {
+    const { id } = params;
     const { data: session, status } = useSession();
     const router = useRouter();
 
@@ -21,17 +22,8 @@ export default function ManageProductsPage() {
         }
     }, [session, status, router]);
 
-    if (status === "loading") {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
-            </div>
-        );
-    }
+    if (status === "loading") return <div>Loading...</div>;
+    if (!session || session.user?.userType !== "farmer") return null;
 
-    if (!session || session.user?.userType !== "farmer") {
-        return null;
-    }
-
-    return <ManageProducts />;
+    return <EditProductForm productId={id} />;
 }

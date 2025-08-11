@@ -33,7 +33,7 @@ export default function ForgotPasswordForm() {
       });
 
       const data = await response.json();
-      console.log("API response:", { status: response.status, data });
+      // console.log("API response:", { status: response.status, data });
 
       if (response.ok) {
         setMessage(data.message);
