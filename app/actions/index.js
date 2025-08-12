@@ -30,7 +30,6 @@ export async function doSocialLogin(formData) {
     const action = formData.get("action");
     // console.log("Attempting social login with action:", action);
 
-    // In NextAuth v5, "redirectTo" is the correct param
     await signIn(action, { redirectTo: "/" });
 }
 

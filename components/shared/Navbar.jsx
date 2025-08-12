@@ -93,7 +93,7 @@ const Navbar = ({ sideMenu }) => {
                   <input
                     type="text"
                     placeholder="Search products..."
-                    className="w-64 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-52 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
                   <FaSearch className="absolute left-3 top-3 text-gray-400"></FaSearch>
                 </div>
@@ -130,10 +130,6 @@ const Navbar = ({ sideMenu }) => {
                               session.user.email?.charAt(0)}
                           </div>
                         )}
-                        <span className="hidden sm:block truncate max-w-[120px]">
-                          {session.user.name || session.user.email}
-                        </span>
-                        <FaChevronDown className="w-3 h-3" />
                       </button>
 
                       {/* Dropdown menu */}
@@ -190,25 +186,21 @@ const Navbar = ({ sideMenu }) => {
                     </Link>
                   )}
                 </div>
+                {/* Dark mode toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
+                >
+                  {theme === "dark" ? <FaSun /> : <FaMoon />}
+                </button>
+
+                {/* Mobile menu button */}
+                <button className="md:hidden p-2 text-gray-700 dark:text-gray-300">
+                  <FaBars />
+                </button>
               </div>
             </>
           )}
-
-          {/* Right actions */}
-          <div className="flex items-center space-x-4">
-            {/* Dark mode toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
-            >
-              {theme === "dark" ? <FaSun /> : <FaMoon />}
-            </button>
-
-            {/* Mobile menu button */}
-            <button className="md:hidden p-2 text-gray-700 dark:text-gray-300">
-              <FaBars />
-            </button>
-          </div>
         </div>
       </div>
     </nav>

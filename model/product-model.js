@@ -16,6 +16,7 @@ const productSchema = new mongoose.Schema(
         status: { type: String, enum: ["active", "inactive"], default: "active" },
         rating: { type: Number, default: 0 },
         reviewsCount: { type: Number, default: 0 },
+        salesCount: { type: Number, default: 0 },
     },
     { timestamps: true }
 );
