@@ -5,10 +5,10 @@ import { FaSearch } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { debounce } from "lodash";
+import { debounceSearch } from "@/helper/debounceSearch";
 
 export const Hero = () => {
-    const [keyword, setKeyword] = useState("");
+    const [inputValue, setInputValue] = useState("");
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState(["All Categories"]);
     const [category, setCategory] = useState("All Categories");
@@ -18,8 +18,19 @@ export const Hero = () => {
     const [imageError, setImageError] = useState({});
     const router = useRouter();
 
-    const debouncedSetKeyword = debounce((value) => setKeyword(value), 300);
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setInputValue(value);
+        debounceSearch(value, category, products, setSuggestions);
+    };
 
+    const handleCategoryChange = (e) => {
+        const selected = e.target.value;
+        setCategory(selected);
+        debounceSearch(inputValue, selected, products, setSuggestions);
+    };
+
+    // Fetch products on mount
     useEffect(() => {
         async function fetchProducts() {
             try {
@@ -28,6 +39,7 @@ export const Hero = () => {
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const data = await res.json();
                 setProducts(data);
+
                 const uniqueCategories = Array.from(
                     new Set(data.map((product) => product.category.toLowerCase()))
                 );
@@ -45,31 +57,14 @@ export const Hero = () => {
         fetchProducts();
     }, []);
 
-    useEffect(() => {
-        if (keyword.trim() === "") {
-            setSuggestions([]);
-            return;
-        }
-
-        const filtered = products.filter((product) => {
-            const matchKeyword = product.productName
-                .toLowerCase()
-                .includes(keyword.toLowerCase());
-            const matchCategory =
-                category === "All Categories" ||
-                product.category.toLowerCase() === category.toLowerCase();
-            return matchKeyword && matchCategory;
-        });
-
-        setSuggestions(filtered.slice(0, 5));
-    }, [keyword, category, products]);
-
+    // Handle search submit
     const handleSearch = (e) => {
         e.preventDefault();
         let url = "/products";
         const params = new URLSearchParams();
-        if (keyword) params.append("keyword", keyword);
-        if (category !== "All Categories") params.append("category", category.toLowerCase());
+        if (inputValue) params.append("keyword", inputValue);
+        if (category !== "All Categories")
+            params.append("category", category.toLowerCase());
         if (params.toString()) url += `?${params.toString()}`;
         router.push(url);
     };
@@ -90,6 +85,7 @@ export const Hero = () => {
                         your doorstep
                     </p>
 
+                    {/* Search Form */}
                     <div className="max-w-2xl mx-auto mb-8 relative">
                         <form
                             onSubmit={handleSearch}
@@ -99,18 +95,16 @@ export const Hero = () => {
                         >
                             <input
                                 type="text"
-                                id="search-input"
                                 placeholder="Search for vegetables, fruits, farmers..."
-                                className="flex-1 px-6 py-4 text-gray-900 text-lg focus:outline-none"
-                                value={keyword}
-                                onChange={(e) => debouncedSetKeyword(e.target.value)}
+                                className="flex-1 px-6 py-3 text-gray-900 text-lg focus:outline-none"
+                                value={inputValue}
+                                onChange={handleInputChange}
                                 aria-label="Search keyword"
                             />
                             <select
-                                id="category-select"
                                 className="px-4 py-4 text-gray-900 border-l border-gray-300 focus:outline-none"
                                 value={category}
-                                onChange={(e) => setCategory(e.target.value)}
+                                onChange={handleCategoryChange}
                                 aria-label="Select category"
                             >
                                 {categories.map((cat) => (
@@ -128,6 +122,7 @@ export const Hero = () => {
                             </button>
                         </form>
 
+                        {/* Suggestions */}
                         {suggestions.length > 0 && (
                             <div className="absolute left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-20 bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                                 {suggestions.map((product) => (
@@ -149,13 +144,17 @@ export const Hero = () => {
                                                 sizes="80px"
                                                 className="object-cover rounded-full"
                                                 onError={() =>
-                                                    setImageError((prev) => ({ ...prev, [product._id]: true }))
+                                                    setImageError((prev) => ({
+                                                        ...prev,
+                                                        [product._id]: true
+                                                    }))
                                                 }
                                             />
                                         </div>
                                         <div className="flex flex-col min-w-0 flex-1">
                                             <span className="inline-block text-xs px-2 py-1 rounded-full mb-2 bg-gradient-to-r from-emerald-400 to-emerald-600 text-white w-max">
-                                                {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
+                                                {product.category.charAt(0).toUpperCase() +
+                                                    product.category.slice(1)}
                                             </span>
                                             <h3 className="text-lg font-extrabold truncate dark:text-white text-gray-900">
                                                 {product.productName}
@@ -172,6 +171,7 @@ export const Hero = () => {
                         )}
                     </div>
 
+                    {/* Stats */}
                     <div className="grid grid-cols-3 gap-8 max-w-md mx-auto">
                         <div className="text-center">
                             <div className="text-3xl font-bold">500+</div>
@@ -183,11 +183,13 @@ export const Hero = () => {
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold">10k+</div>
-                            <div className="text-emerald-200 whitespace-nowrap">Happy Customers</div>
+                            <div className="text-emerald-200 whitespace-nowrap">
+                                Happy Customers
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </section >
     );
 };

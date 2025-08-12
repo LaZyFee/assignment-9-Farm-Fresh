@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Heart, ShoppingCart, Eye, Star } from "lucide-react";
 import Error from "./Error";
 import Loading from "./Loading";
-import levenshtein from "js-levenshtein";
-import { useSearchParams } from "next/navigation";
 import { debounce } from "lodash";
+import { FaSearch } from "react-icons/fa";
 
 export default function ProductsPage() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const keywordParam = searchParams.get("keyword") || "";
     const categoryParam = searchParams.get("category") || "";
@@ -27,12 +28,29 @@ export default function ProductsPage() {
         organic: false,
     });
     const [keyword, setKeyword] = useState(keywordParam);
+    const [category, setCategory] = useState(
+        categoryParam ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1) : "All Categories"
+    );
     const [sortOption, setSortOption] = useState("featured");
     const [currentPage, setCurrentPage] = useState(1);
     const [categoryCounts, setCategoryCounts] = useState([]);
     const [locations, setLocations] = useState([]);
+    const [categories, setCategories] = useState(["All Categories"]);
+    const [inputValue, setInputValue] = useState(keywordParam);
     const productsPerPage = 12;
 
+    const debouncedSetKeyword = debounce((value) => {
+        setKeyword(value);
+    }, 300);
+
+    useEffect(() => {
+        setInputValue(keywordParam);
+    }, [keywordParam]);
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setInputValue(value);
+        debouncedSetKeyword(value);
+    };
     useEffect(() => {
         async function fetchProducts() {
             try {
@@ -63,6 +81,14 @@ export default function ProductsPage() {
                     })) || [{ label: "No categories", count: 0 }]
                 );
 
+                const uniqueCategories = Array.from(
+                    new Set(data.map((product) => product.category.toLowerCase()))
+                );
+                const formattedCategories = uniqueCategories.map(
+                    (cat) => cat.charAt(0).toUpperCase() + cat.slice(1)
+                );
+                setCategories(["All Categories", ...formattedCategories]);
+
                 setLocations(Array.from(locationSet));
             } catch (err) {
                 console.error("Fetch error:", err);
@@ -72,7 +98,18 @@ export default function ProductsPage() {
             }
         }
         fetchProducts();
-    }, [keywordParam, categoryParam]);
+    }, []);
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        let url = "/products";
+        const params = new URLSearchParams();
+        if (keyword) params.append("keyword", keyword);
+        if (category !== "All Categories") params.append("category", category.toLowerCase());
+        if (params.toString()) url += `?${params.toString()}`;
+        router.push(url);
+        setCurrentPage(1);
+    };
 
     const toggleFavorite = (productId) => {
         setFavorites((prev) => {
@@ -123,8 +160,7 @@ export default function ProductsPage() {
     const filteredProducts = products
         .filter((product) => {
             const matchesKeyword =
-                !keyword ||
-                product.productName.toLowerCase().includes(keyword.toLowerCase());
+                !keyword || product.productName.toLowerCase().includes(keyword.toLowerCase());
             const matchesCategory =
                 filters.category.length === 0 ||
                 filters.category.includes(product.category.toLowerCase());
@@ -143,8 +179,7 @@ export default function ProductsPage() {
                     product.farmLocation?.split(",")[0]?.trim().toLowerCase() || "",
                     filters.location.trim().toLowerCase()
                 ) <= 2;
-            const matchesOrganic =
-                !filters.organic || product.features?.includes("organic");
+            const matchesOrganic = !filters.organic || product.features?.includes("organic");
             return (
                 matchesKeyword &&
                 matchesCategory &&
@@ -179,10 +214,10 @@ export default function ProductsPage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
             <main className="max-w-7xl mx-auto px-4 py-8">
-                <div className="bg-primary-600 text-white py-12">
+                <div className="bg-primary-600 text-white py-6">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h1 className="text-4xl font-bold mb-4">Fresh Products</h1>
-                        <p className="text-xl text-primary-100">
+                        <p className="text-xl text-primary-100 mb-6">
                             Discover fresh, locally-sourced produce from our trusted farmers
                         </p>
                     </div>
@@ -272,14 +307,45 @@ export default function ProductsPage() {
                         </div>
                     </aside>
                     <div className="lg:w-3/4">
-                        <div className="flex justify-between items-center mb-4">
-                            <p className="text-gray-600 dark:text-gray-400">
+                        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                            {/* Showing text */}
+                            <p className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 Showing {(currentPage - 1) * productsPerPage + 1}-
-                                {Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts}{" "}
-                                products
+                                {Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
                             </p>
-                            <div>
-                                <label className="text-gray-600 dark:text-gray-400 mr-2" htmlFor="sort">
+
+                            {/* Search bar */}
+                            <div className="flex-1 min-w-[250px]">
+                                <form
+                                    onSubmit={handleSearch}
+                                    className="flex rounded-lg overflow-hidden shadow-lg"
+                                    autoComplete="off"
+                                    aria-label="Search products"
+                                >
+                                    <input
+                                        type="text"
+                                        id="search-input"
+                                        placeholder="Search for vegetables, fruits, farmers..."
+                                        className="flex-1 px-6 py-3 text-gray-900 text-lg focus:outline-none"
+                                        value={inputValue}
+                                        onChange={handleInputChange}
+                                        aria-label="Search keyword"
+                                    />
+                                    <button
+                                        className="bg-primary-700 hover:bg-primary-800 px-6 py-3 transition"
+                                        aria-label="Search"
+                                    >
+                                        <FaSearch />
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Sort dropdown */}
+                            <div className="flex items-center whitespace-nowrap">
+                                <label
+                                    className="text-gray-600 dark:text-gray-400 mr-2"
+                                    htmlFor="sort"
+                                >
                                     Sort by:
                                 </label>
                                 <select
@@ -297,6 +363,7 @@ export default function ProductsPage() {
                                 </select>
                             </div>
                         </div>
+
                         {paginatedProducts.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="w-24 h-24 mx-auto mb-6 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
@@ -318,6 +385,7 @@ export default function ProductsPage() {
                                             organic: false,
                                         });
                                         setKeyword("");
+                                        setCategory("All Categories");
                                         setSortOption("featured");
                                         setCurrentPage(1);
                                     }}
