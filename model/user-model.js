@@ -64,6 +64,13 @@ const UserSchema = new mongoose.Schema({
             return this.userType === 'farmer';
         },
     },
+    products: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Product',
+            default: []
+        },
+    ],
     farmSize: {
         value: {
             type: Number,

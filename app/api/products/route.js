@@ -69,7 +69,12 @@ export async function POST(req) {
             rating: 0,
             reviewsCount: 0
         });
-
+        // Add product to user
+        await User.findByIdAndUpdate(
+            session.user.id || session.user._id,
+            { $push: { products: newProduct._id } },
+            { new: true }
+        );
         return NextResponse.json(
             { message: "Product created successfully", product: newProduct },
             { status: 201 }
@@ -85,7 +90,7 @@ export async function POST(req) {
 export async function GET(req) {
     try {
         await dbConnect();
-        const products = await Product.find({});
+        const products = await Product.find({}).populate("farmer", "firstName lastName");
         // console.log("API returning products:", products);
         return NextResponse.json(products);
     } catch (error) {

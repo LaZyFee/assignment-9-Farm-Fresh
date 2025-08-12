@@ -1,25 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Search,
-  Filter,
-  Users,
-  MapPin,
-  Phone,
-  Mail,
-  Sprout,
-  Maximize,
-  Grid,
-  List,
-} from "lucide-react";
+import { Search, MapPin, Phone, Star, CheckCircle } from "lucide-react";
+import Loading from "./Loading";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function FarmersPage() {
   const [farmers, setFarmers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] = useState("all");
-  const [viewMode, setViewMode] = useState("grid");
+  const [visibleCount, setVisibleCount] = useState(6);
 
   useEffect(() => {
     fetch("/api/farmers")
@@ -31,121 +21,63 @@ export default function FarmersPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const filteredFarmers = farmers.filter((farmer) => {
-    const matchesSearch =
-      `${farmer.firstName} ${farmer.lastName}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      farmer.farmName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      farmer.specialization.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesSpecialization =
-      selectedSpecialization === "all" ||
-      farmer.specialization.toLowerCase() ===
-        selectedSpecialization.toLowerCase();
-
-    return matchesSearch && matchesSpecialization;
-  });
-
-  const specializations = [...new Set(farmers.map((f) => f.specialization))];
-
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <div className="animate-spin w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
-                Loading farmers directory...
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
+  // Farmers to display based on count
+  const visibleFarmers = farmers.slice(0, visibleCount);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-6 py-8">
+      <div className="container mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <Sprout className="w-12 h-12 text-green-600 dark:text-green-400 mr-3" />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-green-700 to-emerald-600 dark:from-green-400 dark:to-emerald-300 bg-clip-text text-transparent">
-              Farmers Directory
-            </h1>
-          </div>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
-            Connect with local agricultural professionals
-          </p>
-          <div className="flex items-center justify-center text-lg text-green-700 dark:text-green-400 font-semibold">
-            <Users className="w-5 h-5 mr-2" />
-            {farmers.length} Registered Farmers
+        <div className="bg-primary-600 text-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-4xl font-bold mb-4">Meet Our Farmers</h1>
+            <p className="text-xl text-primary-100 max-w-2xl mx-auto">
+              Discover the passionate farmers who grow fresh, organic produce
+              with care and dedication
+            </p>
           </div>
         </div>
-
-        {/* Search and Filter Controls */}
-        <div className=" p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search farmers, farms, or specializations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-all duration-200"
-              />
+        {/* <!-- Stats --> */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 my-16">
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              {farmers.length}+
             </div>
-
-            {/* Specialization Filter */}
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
-              <select
-                value={selectedSpecialization}
-                onChange={(e) => setSelectedSpecialization(e.target.value)}
-                className="pl-10 pr-8 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-w-[200px] appearance-none cursor-pointer"
-              >
-                <option value="all">All Specializations</option>
-                {specializations.map((spec) => (
-                  <option key={spec} value={spec}>
-                    {spec}
-                  </option>
-                ))}
-              </select>
+            <div className="text-gray-600 dark:text-gray-400">
+              Active Farmers
             </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === "grid"
-                    ? "bg-white dark:bg-gray-900 shadow-md text-green-600 dark:text-green-400"
-                    : "text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
-                }`}
-              >
-                <Grid className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === "table"
-                    ? "bg-white dark:bg-gray-900 shadow-md text-green-600 dark:text-green-400"
-                    : "text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
-                }`}
-              >
-                <List className="w-5 h-5" />
-              </button>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              50+
+            </div>
+            <div className="text-gray-600 dark:text-gray-400">
+              Districts Covered
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              2000+
+            </div>
+            <div className="text-gray-600 dark:text-gray-400">
+              Products Available
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              95%
+            </div>
+            <div className="text-gray-600 dark:text-gray-400">
+              Organic Certified
             </div>
           </div>
         </div>
 
         {/* Farmers Display */}
-        {filteredFarmers.length === 0 ? (
+        {farmers.length === 0 ? (
           <div className="text-center py-16">
             <div className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl p-12 max-w-md mx-auto">
               <Search className="w-16 h-16 text-gray-300 dark:text-gray-500 mx-auto mb-4" />
@@ -157,161 +89,134 @@ export default function FarmersPage() {
               </p>
             </div>
           </div>
-        ) : viewMode === "grid" ? (
-          /* Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredFarmers.map((farmer) => (
-              <div
-                key={farmer._id}
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 border border-white/20 dark:border-gray-700 overflow-hidden group"
-              >
-                <div className="p-6">
-                  {/* Farmer Avatar/Initial */}
-                  <div className="flex items-center mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                      {farmer.firstName?.[0]}
-                      {farmer.lastName?.[0]}
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-8">
+            {visibleFarmers.map((farmer) => {
+              const imageSrc = farmer.profilePicture?.startsWith("http")
+                ? farmer.profilePicture
+                : `${process.env.NEXT_PUBLIC_API_URL || ""}${
+                    farmer.profilePicture
+                  }`;
+
+              return (
+                <div
+                  key={farmer._id}
+                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  {/* Image + Certified Badge */}
+                  <div className="relative">
+                    <Image
+                      src={imageSrc || "https://via.placeholder.com/400x300"}
+                      alt={`${farmer.firstName} ${farmer.lastName}`}
+                      width={300}
+                      height={300}
+                      className="w-full h-64 object-cover"
+                    />
+                    <div className="absolute top-4 right-4">
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Certified
+                      </span>
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    {/* Name + Rating */}
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                         {farmer.firstName} {farmer.lastName}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center text-yellow-400">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="text-gray-600 dark:text-gray-400 ml-1">
+                          {farmer.rating || "4.8"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <p className="text-gray-600 dark:text-gray-400 mb-3 flex items-center">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {farmer.address}
+                    </p>
+
+                    {/* Bio / Description */}
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      {farmer.bio ||
+                        "Specializes in organic vegetables and has been farming for over 15 years."}
+                    </p>
+
+                    {/* Farm Size & Products */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Farm Size:</span>{" "}
+                        {farmer.farmSize?.value} {farmer.farmSize?.unit}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Products:</span>{" "}
+                        {farmer.products.length || 0}
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex space-x-2 mb-4">
+                      <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs">
                         {farmer.specialization}
-                      </p>
+                      </span>
                     </div>
-                  </div>
 
-                  {/* Farm Name */}
-                  <div className="mb-4">
-                    <h4 className="text-lg font-semibold text-green-700 dark:text-green-400 mb-1">
-                      {farmer.farmName}
-                    </h4>
-                    <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                      <Maximize className="w-4 h-4 mr-1" />
-                      {farmer.farmSize?.value} {farmer.farmSize?.unit}
+                    {/* Buttons */}
+                    <div className="flex space-x-3">
+                      <Link
+                        href={`/farmers/${farmer._id}`}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition"
+                      >
+                        View Products
+                      </Link>
+
+                      <a
+                        href={`tel:${farmer.phone}`}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </a>
                     </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-start mb-4 text-gray-600 dark:text-gray-400">
-                    <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{farmer.address}</span>
-                  </div>
-
-                  {/* Contact */}
-                  <div className="flex gap-2">
-                    <a
-                      href={`mailto:${farmer.email}`}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
-                    >
-                      <Mail className="w-4 h-4 mr-1" />
-                      Email
-                    </a>
-                    <a
-                      href={`tel:${farmer.phone}`}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
-                    >
-                      <Phone className="w-4 h-4 mr-1" />
-                      Call
-                    </a>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Table View */
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gradient-to-r from-green-600 to-emerald-600 text-white">
-                  <tr>
-                    <th className="px-6 py-4 text-left font-semibold">
-                      Farmer
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold">
-                      Farm Details
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold">
-                      Specialization
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold">
-                      Location
-                    </th>
-                    <th className="px-6 py-4 text-left font-semibold">
-                      Contact
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFarmers.map((farmer, index) => (
-                    <tr
-                      key={farmer._id}
-                      className={`border-b border-gray-100 dark:border-gray-700 hover:bg-green-50/50 dark:hover:bg-gray-700/50 transition-colors ${
-                        index % 2 === 0
-                          ? "bg-white/50 dark:bg-gray-900/50"
-                          : "bg-gray-50/50 dark:bg-gray-800/50"
-                      }`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                            {farmer.firstName?.[0]}
-                            {farmer.lastName?.[0]}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-800 dark:text-gray-100">
-                              {farmer.firstName} {farmer.lastName}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-green-700 dark:text-green-400">
-                          {farmer.farmName}
-                        </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                          <Maximize className="w-3 h-3 mr-1" />
-                          {farmer.farmSize?.value} {farmer.farmSize?.unit}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-sm font-medium">
-                          {farmer.specialization}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-600 dark:text-gray-400">
-                        <div className="flex items-start">
-                          <MapPin className="w-4 h-4 mr-1 mt-0.5 flex-shrink-0" />
-                          {farmer.address}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex gap-2">
-                          <a
-                            href={`mailto:${farmer.email}`}
-                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center"
-                          >
-                            <Mail className="w-3 h-3 mr-1" />
-                            Email
-                          </a>
-                          <a
-                            href={`tel:${farmer.phone}`}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center"
-                          >
-                            <Phone className="w-3 h-3 mr-1" />
-                            Call
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              );
+            })}
           </div>
         )}
+        {/* SHOW MORE BUTTON */}
+        {visibleCount < farmers.length && (
+          <div className="text-center mt-12">
+            <button
+              onClick={() => setVisibleCount((prev) => prev + 6)}
+              className="bg-primary-600 hover:bg-primary-700 text-white px-8 py-3 rounded-lg font-medium transition"
+            >
+              Show More Farmers
+            </button>
+          </div>
+        )}
+      </div>
+      {/* <!-- Join as Farmer CTA --> */}
+      <div className="bg-primary-600 text-white py-16 mt-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            Want to Join Our Farmer Community?
+          </h2>
+          <p className="text-xl text-primary-100 mb-8">
+            Share your fresh produce with thousands of customers and grow your
+            business
+          </p>
+          <Link
+            href="/register"
+            className="inline-block bg-white text-primary-600 px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition"
+          >
+            Join as Farmer
+          </Link>
+        </div>
       </div>
     </div>
   );

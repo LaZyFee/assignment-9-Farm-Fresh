@@ -46,6 +46,7 @@ const Navbar = ({ sideMenu }) => {
   // farmer - "Home", "Add Product", "Manage Products", "About", "Logout",
   const farmerMenu = [
     { name: "Home", href: "/" },
+    { name: "Farmers", href: "/farmers" },
     { name: "Add Product", href: "/add-product" },
     { name: "Manage Products", href: "/manage-products" },
     { name: "About", href: "/about" },

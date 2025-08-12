@@ -32,13 +32,13 @@ export const Categories = () => {
             icon: <FaJar className="text-4xl text-purple-600 dark:text-purple-400" />,
             name: "Honey",
             count: "15+ items",
-            bg: "purple",
+            bg: "red",
         },
         {
             icon: <FaLeaf className="text-4xl text-orange-600 dark:text-orange-400" />,
             name: "Herbs",
             count: "30+ items",
-            bg: "orange",
+            bg: "green",
         },
     ];
 
