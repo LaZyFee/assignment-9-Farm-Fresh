@@ -7,12 +7,15 @@ import Link from "next/link";
 import { FaSun, FaMoon, FaBars, FaSearch, FaSeedling } from "react-icons/fa";
 import { FaCartShopping } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
+import { useCartStore } from "@/stores/cartStore";
 
 const Navbar = ({ sideMenu }) => {
   const { theme, toggleTheme } = useTheme();
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { cart, setCart } = useCartStore();
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -23,12 +26,29 @@ const Navbar = ({ sideMenu }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    async function fetchCart() {
+      try {
+        const cartRes = await fetch("/api/cart");
+        if (cartRes.ok) {
+          const cartData = await cartRes.json();
+          setCart(cartData);
+        } else {
+          console.error("Failed to fetch cart");
+        }
+      } catch (err) {
+        console.error("Fetch cart error:", err);
+      }
+    }
+    fetchCart();
+  }, [setCart]);
+
   if (status === "loading") {
     return (
       <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
     );
   }
-  // user -"Home", "Products", "Farmers" "My Orders", "About", "Logout",
+
   const userMenu = [
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
@@ -36,7 +56,7 @@ const Navbar = ({ sideMenu }) => {
     { name: "My Orders", href: "/my-orders" },
     { name: "About", href: "/about" },
   ];
-  // farmer - "Home", "Add Product", "Manage Products", "About", "Logout",
+
   const farmerMenu = [
     { name: "Home", href: "/" },
     { name: "Farmers", href: "/farmers" },
@@ -44,6 +64,7 @@ const Navbar = ({ sideMenu }) => {
     { name: "Manage Products", href: "/manage-products" },
     { name: "About", href: "/about" },
   ];
+
   const routesToRender =
     session?.user?.userType === "farmer" ? farmerMenu : userMenu;
 
@@ -51,7 +72,6 @@ const Navbar = ({ sideMenu }) => {
     <nav className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
             <div className="bg-green-500 p-2 rounded-lg">
               <FaSeedling className="text-white text-xl"></FaSeedling>
@@ -66,7 +86,6 @@ const Navbar = ({ sideMenu }) => {
             </div>
           </Link>
 
-          {/* Navigation */}
           {sideMenu && (
             <>
               <div className="hidden md:flex items-center space-x-8">
@@ -81,7 +100,6 @@ const Navbar = ({ sideMenu }) => {
                 ))}
               </div>
               <div className="flex items-center space-x-4">
-                {/* Search */}
                 <div className="hidden sm:block relative">
                   <input
                     type="text"
@@ -91,17 +109,18 @@ const Navbar = ({ sideMenu }) => {
                   <FaSearch className="absolute left-3 top-3 text-gray-400"></FaSearch>
                 </div>
 
-                {/* Cart */}
                 <Link
                   href="/cart"
                   className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
                 >
                   <FaCartShopping />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    3
-                  </span>
+                  {cart.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {cart.length}
+                    </span>
+                  )}
                 </Link>
-                {/* User menu */}
+
                 <div className="relative" ref={dropdownRef}>
                   {session?.user ? (
                     <>
@@ -125,7 +144,6 @@ const Navbar = ({ sideMenu }) => {
                         )}
                       </button>
 
-                      {/* Dropdown menu */}
                       {open && (
                         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
                           <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
@@ -179,7 +197,7 @@ const Navbar = ({ sideMenu }) => {
                     </Link>
                   )}
                 </div>
-                {/* Dark mode toggle */}
+
                 <button
                   onClick={toggleTheme}
                   className="p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
@@ -187,7 +205,6 @@ const Navbar = ({ sideMenu }) => {
                   {theme === "dark" ? <FaSun /> : <FaMoon />}
                 </button>
 
-                {/* Mobile menu button */}
                 <button className="md:hidden p-2 text-gray-700 dark:text-gray-300">
                   <FaBars />
                 </button>

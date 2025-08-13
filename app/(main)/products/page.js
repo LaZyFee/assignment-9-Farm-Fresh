@@ -9,6 +9,9 @@ import Error from "./Error";
 import Loading from "./Loading";
 import { debounce } from "lodash";
 import { FaSearch } from "react-icons/fa";
+import { useFavoriteStore } from "@/stores/favoriteStore";
+import { useCartStore } from "@/stores/cartStore";
+import Swal from "sweetalert2";
 
 export default function ProductsPage() {
     const router = useRouter();
@@ -18,8 +21,6 @@ export default function ProductsPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [favorites, setFavorites] = useState(new Set());
-    const [cart, setCart] = useState(new Set());
     const [imageError, setImageError] = useState({});
     const [filters, setFilters] = useState({
         category: categoryParam ? [categoryParam.toLowerCase()] : [],
@@ -39,6 +40,9 @@ export default function ProductsPage() {
     const [inputValue, setInputValue] = useState(keywordParam);
     const productsPerPage = 6;
 
+    const { favorites, toggleFavorite, setFavorites } = useFavoriteStore();
+    const { cart, addToCart, setCart } = useCartStore();
+
     const debouncedSetKeyword = debounce((value) => {
         setKeyword(value);
     }, 300);
@@ -46,25 +50,20 @@ export default function ProductsPage() {
     useEffect(() => {
         setInputValue(keywordParam);
     }, [keywordParam]);
-    const handleInputChange = (e) => {
-        const value = e.target.value;
-        setInputValue(value);
-        debouncedSetKeyword(value);
-    };
+
     useEffect(() => {
-        async function fetchProducts() {
+        async function fetchData() {
             try {
                 setLoading(true);
+                // Fetch products
                 const res = await fetch("/api/products", { cache: "no-store" });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const data = await res.json();
-
                 setProducts(Array.isArray(data) ? data : []);
 
                 // Group categories and count
                 const categoryMap = {};
                 const locationSet = new Set();
-
                 data.forEach((product) => {
                     categoryMap[product.category.toLowerCase()] =
                         (categoryMap[product.category.toLowerCase()] || 0) + 1;
@@ -88,8 +87,20 @@ export default function ProductsPage() {
                     (cat) => cat.charAt(0).toUpperCase() + cat.slice(1)
                 );
                 setCategories(["All Categories", ...formattedCategories]);
-
                 setLocations(Array.from(locationSet));
+
+                // Fetch favorites
+                const favoritesRes = await fetch("/api/favorites");
+                if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
+                const favoritesData = await favoritesRes.json();
+                setFavorites(favoritesData.map((id) => id.toString()));
+
+                // Fetch cart
+                const cartRes = await fetch("/api/cart");
+                if (cartRes.ok) {
+                    const cartData = await cartRes.json();
+                    setCart(cartData);
+                }
             } catch (err) {
                 console.error("Fetch error:", err);
                 setError(`Failed to load products: ${err.message}`);
@@ -97,8 +108,14 @@ export default function ProductsPage() {
                 setLoading(false);
             }
         }
-        fetchProducts();
-    }, []);
+        fetchData();
+    }, [setFavorites, setCart]);
+
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setInputValue(value);
+        debouncedSetKeyword(value);
+    };
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -111,27 +128,35 @@ export default function ProductsPage() {
         setCurrentPage(1);
     };
 
-    const toggleFavorite = (productId) => {
-        setFavorites((prev) => {
-            const newFavorites = new Set(prev);
-            if (newFavorites.has(productId)) {
-                newFavorites.delete(productId);
-            } else {
-                newFavorites.add(productId);
-            }
-            return newFavorites;
-        });
+    const handleToggleFavorite = async (productId) => {
+        try {
+            await toggleFavorite(productId);
+        } catch (err) {
+            console.error("Failed to update favorite:", err);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: "Failed to update favorite. Please try again.",
+            });
+        }
     };
 
-    const toggleCart = (productId) => {
-        setCart((prev) => {
-            const newCart = new Set(prev);
-            if (newCart.has(productId)) {
-                newCart.delete(productId);
-            } else {
-                newCart.add(productId);
-            }
-            return newCart;
+    const handleAddToCart = (product) => {
+        addToCart({ product, quantity: 1 });
+        Swal.fire({
+            icon: "success",
+            title: "Added to Cart",
+            toast: true,
+            position: "top",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+            text: `${product.productName} has been added to your cart.`,
         });
     };
 
@@ -175,10 +200,7 @@ export default function ProductsPage() {
                 });
             const matchesLocation =
                 !filters.location ||
-                levenshtein(
-                    product.farmLocation?.split(",")[0]?.trim().toLowerCase() || "",
-                    filters.location.trim().toLowerCase()
-                ) <= 2;
+                product.farmLocation?.split(",")[0]?.trim().toLowerCase().includes(filters.location.toLowerCase());
             const matchesOrganic = !filters.organic || product.features?.includes("organic");
             return (
                 matchesKeyword &&
@@ -308,13 +330,11 @@ export default function ProductsPage() {
                     </aside>
                     <div className="lg:w-3/4">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                            {/* Showing text */}
                             <p className="text-gray-600 dark:text-gray-400 whitespace-nowrap">
                                 Showing {(currentPage - 1) * productsPerPage + 1}-
                                 {Math.min(currentPage * productsPerPage, totalProducts)} of {totalProducts} products
                             </p>
 
-                            {/* Search bar */}
                             <div className="flex-1 min-w-[250px]">
                                 <form
                                     onSubmit={handleSearch}
@@ -340,7 +360,6 @@ export default function ProductsPage() {
                                 </form>
                             </div>
 
-                            {/* Sort dropdown */}
                             <div className="flex items-center whitespace-nowrap">
                                 <label
                                     className="text-gray-600 dark:text-gray-400 mr-2"
@@ -397,129 +416,133 @@ export default function ProductsPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {paginatedProducts.map((product) => (
-                                    <div
-                                        key={product._id}
-                                        className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
-                                    >
-                                        <div className="relative overflow-hidden">
-                                            {product.images?.[0] ? (
-                                                <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-700">
-                                                    <Image
-                                                        src={imageError[product._id] ? "/fallback-image.jpg" : product.images[0]}
-                                                        alt={product.productName}
-                                                        fill
-                                                        sizes="(max-width: 768px) 100vw, 33vw"
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                        onError={() =>
-                                                            setImageError((prev) => ({ ...prev, [product._id]: true }))
-                                                        }
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="relative w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                                                    <div className="text-center">
-                                                        <span className="text-4xl text-gray-400 dark:text-gray-500 mb-2 block">
-                                                            📷
-                                                        </span>
-                                                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                            No Image
-                                                        </span>
+                                {paginatedProducts.map((product) => {
+                                    const isFavorite = favorites.includes(product._id.toString());
+                                    const isInCart = cart.some(
+                                        (item) => item.product._id.toString() === product._id.toString()
+                                    );
+
+                                    return (
+                                        <div
+                                            key={product._id}
+                                            className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-xl dark:hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
+                                        >
+                                            <div className="relative overflow-hidden">
+                                                {product.images?.[0] ? (
+                                                    <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-700">
+                                                        <Image
+                                                            src={imageError[product._id] ? "/fallback-image.jpg" : product.images[0]}
+                                                            alt={product.productName}
+                                                            fill
+                                                            sizes="(max-width: 768px) 100vw, 33vw"
+                                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            onError={() =>
+                                                                setImageError((prev) => ({ ...prev, [product._id]: true }))
+                                                            }
+                                                        />
                                                     </div>
-                                                </div>
-                                            )}
-                                            {product.features?.includes("organic") && (
-                                                <span className="absolute top-3 left-3 bg-emerald-600 text-white text-xs px-2 py-1 rounded">
-                                                    Organic
-                                                </span>
-                                            )}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    toggleFavorite(product._id);
-                                                }}
-                                                className="absolute top-3 right-3 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200 shadow-md"
-                                                aria-label={
-                                                    favorites.has(product._id)
-                                                        ? "Remove from favorites"
-                                                        : "Add to favorites"
-                                                }
-                                            >
-                                                <Heart
-                                                    className={`w-4 h-4 ${favorites.has(product._id)
-                                                        ? "text-red-500 fill-red-500"
-                                                        : "text-gray-600 dark:text-gray-300"
-                                                        } transition-colors duration-200`}
-                                                />
-                                            </button>
-                                        </div>
-                                        <div className="p-5">
-                                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                                                {product.productName}
-                                            </h2>
-                                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                                                By{" "}
-                                                {product.farmer
-                                                    ? `${product.farmer.firstName} ${product.farmer.lastName} `
-                                                    : "Unknown Farmer"}
-                                                • {product.farmLocation}
-                                            </p>
-                                            <div className="flex items-center gap-1 mb-3">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`w-4 h-4 ${i < Math.floor(product.rating)
-                                                            ? "text-yellow-400 fill-yellow-400"
-                                                            : "text-gray-300 dark:text-gray-600"
-                                                            }`}
-                                                    />
-                                                ))}
-                                                <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
-                                                    ({product.rating})
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div>
-                                                    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                                                        ৳{product.price}
+                                                ) : (
+                                                    <div className="relative w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                                                        <div className="text-center">
+                                                            <span className="text-4xl text-gray-400 dark:text-gray-500 mb-2 block">
+                                                                📷
+                                                            </span>
+                                                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                                No Image
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {product.features?.includes("organic") && (
+                                                    <span className="absolute top-3 left-3 bg-emerald-600 text-white text-xs px-2 py-1 rounded">
+                                                        Organic
                                                     </span>
-                                                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
-                                                        / {product.unit}
-                                                    </span>
-                                                </div>
-                                                <span className="text-sm text-gray-500 dark:text-gray-400">
-                                                    Stock: {product.stock}kg
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-2">
+                                                )}
                                                 <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        toggleCart(product._id);
-                                                    }}
-                                                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${cart.has(product._id)
-                                                        ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-                                                        : "bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                                                        }`}
+                                                    onClick={() => handleToggleFavorite(product._id)}
+                                                    className="absolute top-3 right-3 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800 transition-colors duration-200 shadow-md"
                                                     aria-label={
-                                                        cart.has(product._id) ? "Remove from cart" : "Add to cart"
+                                                        isFavorite
+                                                            ? "Remove from favorites"
+                                                            : "Add to favorites"
                                                     }
                                                 >
-                                                    <ShoppingCart className="w-4 h-4" />
-                                                    {cart.has(product._id) ? "Added" : "Add to Cart"}
+                                                    <Heart
+                                                        className={`w-4 h-4 ${isFavorite
+                                                            ? "text-red-500 fill-red-500"
+                                                            : "text-gray-600 dark:text-gray-300"
+                                                            } transition-colors duration-200`}
+                                                    />
                                                 </button>
-                                                <Link
-                                                    href={`/products/${product._id}`}
-                                                    className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 border border-gray-200 dark:border-gray-600"
-                                                    aria-label={`View ${product.productName}`}
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                    View
-                                                </Link>
+                                            </div>
+                                            <div className="p-5">
+                                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                                                    {product.productName}
+                                                </h2>
+                                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                                    By{" "}
+                                                    {product.farmer
+                                                        ? `${product.farmer.firstName} ${product.farmer.lastName} `
+                                                        : "Unknown Farmer"}
+                                                    • {product.farmLocation}
+                                                </p>
+                                                <div className="flex items-center gap-1 mb-3">
+                                                    {[...Array(5)].map((_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            className={`w-4 h-4 ${i < Math.floor(product.rating)
+                                                                ? "text-yellow-400 fill-yellow-400"
+                                                                : "text-gray-300 dark:text-gray-600"
+                                                                }`}
+                                                        />
+                                                    ))}
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
+                                                        ({product.rating})
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div>
+                                                        <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                                                            ৳{product.price}
+                                                        </span>
+                                                        <span className="text-sm text-gray-500 dark:text-gray-400 ml-1">
+                                                            / {product.unit}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                                                        Stock: {product.stock} {product.unit}
+                                                    </span>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleAddToCart(product)}
+                                                        disabled={isInCart}
+                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${isInCart
+                                                                ? "bg-gray-400 dark:bg-gray-600 text-gray-100 cursor-not-allowed"
+                                                                : "bg-primary-500 hover:bg-emerald-700 text-white"
+                                                            }`}
+                                                        aria-label={
+                                                            isInCart
+                                                                ? `${product.productName} is already in cart`
+                                                                : `Add ${product.productName} to cart`
+                                                        }
+                                                    >
+                                                        <ShoppingCart className="w-4 h-4" />
+                                                        {isInCart ? "In Cart" : "Add to Cart"}
+                                                    </button>
+                                                    <Link
+                                                        href={`/products/${product._id}`}
+                                                        className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all duration-200 border border-gray-200 dark:border-gray-600"
+                                                        aria-label={`View ${product.productName}`}
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                        View
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                         <div className="flex justify-center gap-2 mt-8">

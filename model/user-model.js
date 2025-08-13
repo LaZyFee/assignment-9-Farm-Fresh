@@ -44,6 +44,19 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    favorites: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Product",
+            default: []
+        }
+    ],
+    cart: [
+        {
+            product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+            quantity: { type: Number, required: true, min: 1 },
+        },
+    ],
     userType: {
         type: String,
         enum: ['customer', 'farmer'],
