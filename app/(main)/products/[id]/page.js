@@ -8,6 +8,8 @@ import ErrorComponent from './error';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaBolt, FaHeart, FaMapMarkerAlt, FaMinus, FaPlus, FaShoppingCart, FaStar } from 'react-icons/fa';
+import Reviews from './Reviews';
+import RelatedProduct from './RelatedProduct';
 
 export default function ProductDetailsPage() {
     const params = useParams();
@@ -267,13 +269,12 @@ export default function ProductDetailsPage() {
                                     </div>
                                 </div>
                             </div>
-
-
-
                         </div>
                     </div>
                 </div>
             </div>
+            <Reviews product={product} />
+            <RelatedProduct product={product} />
         </main>
     );
 }

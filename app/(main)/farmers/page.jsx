@@ -167,10 +167,10 @@ export default function FarmersPage() {
                     </div>
 
                     {/* Buttons */}
-                    <div className="flex space-x-3">
+                    <div className="flex space-x-3 items-center justify-between">
                       <Link
                         href={`/farmers/${farmer._id}`}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition"
+                        className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-medium transition px-4"
                       >
                         View Products
                       </Link>

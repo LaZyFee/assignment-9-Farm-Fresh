@@ -76,7 +76,7 @@ export default function FarmerProducts({ params }) {
     }
 
     return (
-        <div className="p-6 min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+        <div className="p-6 min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
                 Farmer's Products
             </h1>
@@ -85,7 +85,7 @@ export default function FarmerProducts({ params }) {
                     No products found for this farmer.
                 </p>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {products.map((product) => (
                         <div
                             key={product._id}

@@ -4,14 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import useTheme from "@/hooks/useTheme";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  FaSun,
-  FaMoon,
-  FaBars,
-  FaChevronDown,
-  FaSearch,
-  FaSeedling,
-} from "react-icons/fa";
+import { FaSun, FaMoon, FaBars, FaSearch, FaSeedling } from "react-icons/fa";
 import { FaCartShopping } from "react-icons/fa6";
 import { useEffect, useRef, useState } from "react";
 
