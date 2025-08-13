@@ -7,6 +7,7 @@ import NotFound from './not-found';
 import ErrorComponent from './error';
 import Image from 'next/image';
 import Link from 'next/link';
+import { FaBolt, FaHeart, FaMapMarkerAlt, FaMinus, FaPlus, FaShoppingCart, FaStar } from 'react-icons/fa';
 
 export default function ProductDetailsPage() {
     const params = useParams();
@@ -14,7 +15,13 @@ export default function ProductDetailsPage() {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [mainImage, setMainImage] = useState();
+    const [quantity, setQuantity] = useState(0);
 
+
+    const handleImageClick = (image) => {
+        setMainImage(image);
+    };
     useEffect(() => {
         if (!params.id) return;
 
@@ -34,6 +41,7 @@ export default function ProductDetailsPage() {
 
                 const productData = await res.json();
                 setProduct(productData);
+                setMainImage(productData.images[0]);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -79,40 +87,36 @@ export default function ProductDetailsPage() {
                         <div className=" p-6 lg:p-8 h-fit">
                             {product.images?.length > 0 ? (
                                 <div className="space-y-4">
-                                    {/* Main Image */}
-                                    <div className="relative w-full h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg">
+                                    <div className="aspect-square bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg">
                                         <Image
-                                            src={product.images[0]}
+                                            id="mainImage"
+                                            src={mainImage}
                                             alt={product.productName}
-                                            fill
-                                            className="object-cover hover:scale-105 transition-transform duration-300"
-                                            sizes="(max-width: 768px) 100vw, 50vw"
-                                            priority
-                                            onError={(e) => {
-                                                e.target.src = '/placeholder-image.jpg';
-                                            }}
+                                            width={600}
+                                            height={600}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
                                         />
                                     </div>
-
-                                    {/* Additional Images */}
-                                    {product.images.length > 1 && (
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {product.images.slice(1, 4).map((img, i) => (
-                                                <div key={i} className="relative h-24 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-md">
-                                                    <Image
-                                                        src={img}
-                                                        alt={`${product.productName} ${i + 2}`}
-                                                        fill
-                                                        className="object-cover hover:scale-105 transition-transform duration-300"
-                                                        sizes="150px"
-                                                        onError={(e) => {
-                                                            e.target.src = '/placeholder-image.jpg';
-                                                        }}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <div className="grid grid-cols-5 gap-2">
+                                        {product.images.map((img, index) => (
+                                            <button
+                                                key={index}
+                                                className={`aspect-square bg-white dark:bg-gray-800 rounded-lg overflow-hidden border-2 ${mainImage === img ? 'border-primary-500' : 'border-transparent hover:border-primary-500'
+                                                    }`}
+                                                onClick={() => handleImageClick(img)}
+                                            >
+                                                <Image
+                                                    src={img}
+                                                    alt={`${product.productName} ${index + 1}`}
+                                                    width={100}
+                                                    height={100}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="w-full h-80 lg:h-96 bg-gray-100 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center shadow-inner">
@@ -128,111 +132,144 @@ export default function ProductDetailsPage() {
 
                         {/* Product Details */}
                         <div className="p-6 lg:p-8">
+                            {/* features */}
+                            <div className="mb-6 flex items-center gap-3">
+                                {product.features.map((feature, index) => (
+                                    <span key={index} className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full text-xs font-medium">
+                                        {feature}</span>
+                                ))}
+                            </div>
                             {/* Product Title */}
-                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
+                            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2 leading-tight">
                                 {product.productName}
                             </h1>
 
-                            {/* Description */}
-                            <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-                                {product.description}
+                            {/* product owner*/}
+                            <p className="text-lg text-gray-600 dark:text-gray-400">
+                                Produced by <span className="font-semibold text-primary-600 dark:text-primary-400">{product.farmer.farmName}</span>
                             </p>
-
-                            {/* Price Section */}
-                            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6 mb-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium text-green-700 dark:text-green-400 mb-1">Price</p>
-                                        <p className="text-3xl font-bold text-green-800 dark:text-green-300">
-                                            ৳{product.price}
-                                            <span className="text-lg font-normal text-gray-600 dark:text-gray-400 ml-2">
-                                                / {product.unit}
-                                            </span>
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Stock</p>
-                                        <p className={`text-xl font-semibold ${product.stock > 10
-                                            ? 'text-green-600 dark:text-green-400'
-                                            : product.stock > 0
-                                                ? 'text-yellow-600 dark:text-yellow-400'
-                                                : 'text-red-600 dark:text-red-400'
-                                            }`}>
-                                            {product.stock} units
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Product Info Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                    <div className="flex items-center mb-2">
-                                        <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                        </svg>
-                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Category</span>
-                                    </div>
-                                    <p className="font-semibold text-gray-900 dark:text-gray-100">{product.category}</p>
-                                </div>
-
-                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                    <div className="flex items-center mb-2">
-                                        <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Farm Location</span>
-                                    </div>
-                                    <p className="font-semibold text-gray-900 dark:text-gray-100">{product.farmLocation}</p>
-                                </div>
-
-                                {product.harvestDate && (
-                                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 sm:col-span-2">
-                                        <div className="flex items-center mb-2">
-                                            <svg className="w-5 h-5 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Harvest Date</span>
-                                        </div>
-                                        <p className="font-semibold text-gray-900 dark:text-gray-100">
-                                            {new Date(product.harvestDate).toLocaleDateString()}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Features */}
-                            {product.features?.length > 0 && (
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-                                        <svg className="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                                        </svg>
-                                        Key Features
-                                    </h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {product.features.map((feature, i) => (
-                                            <div key={i} className="flex items-start">
-                                                <svg className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                </svg>
-                                                <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-                                            </div>
+                            {/* Rating and Reviews */}
+                            <div className="flex items-center space-x-4 my-8">
+                                <div className="flex items-center space-x-1">
+                                    <div className="flex text-yellow-400">
+                                        {[...Array(5)].map((_, i) => (
+                                            <FaStar key={i}></FaStar>
                                         ))}
                                     </div>
+                                    <span className="text-lg font-semibold text-gray-900 dark:text-white">{product.rating || 0}</span>
                                 </div>
-                            )}
-
-                            {/* Action Button */}
-                            <div className="space-y-3">
-                                <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5">
-                                    Contact Farmer
-                                </button>
-                                <button className="w-full border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 py-3 px-6 rounded-xl font-medium transition-colors">
-                                    Add to Favourite
+                                <span className="text-gray-500 dark:text-gray-400">({product.reviewsCount || 0} reviews)</span>
+                                <button className="text-primary-600 dark:text-primary-400 hover:underline">
+                                    Write a review
                                 </button>
                             </div>
+
+                            {/* Price and Stock */}
+                            <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-6 mb-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                        <span className="text-3xl font-bold text-primary-600 dark:text-primary-400">৳{product.price}</span>
+                                        <span className="text-lg text-gray-500 dark:text-gray-400">/{product.unit}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">Available Stock</p>
+                                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{product.stock} {product.unit}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center text-gray-600 dark:text-gray-400 mb-4">
+                                    <FaMapMarkerAlt className="mr-2"></FaMapMarkerAlt>
+                                    <span>{product.farmLocation}</span>
+                                </div>
+                            </div>
+                            {/* Quantity Selection */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Quantity ({product.unit})
+                                    </label>
+                                    <div className="flex items-center space-x-3">
+                                        <button
+                                            type="button"
+                                            disabled={quantity <= 1}
+                                            onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                                            className="w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <FaMinus className="text-sm" />
+                                        </button>
+
+                                        <input
+                                            type="number"
+                                            value={quantity}
+                                            min="1"
+                                            max={product.stock}
+                                            onChange={(e) =>
+                                                setQuantity(Math.min(product.stock, Math.max(1, Number(e.target.value))))
+                                            }
+                                            className="w-20 text-center py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            disabled={quantity >= product.stock}
+                                            onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                                            className="w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-600 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <FaPlus className="text-sm" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="space-y-3 my-5">
+                                <button
+                                    type="button"
+                                    className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 text-white py-3 px-6 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                                >
+                                    <FaBolt /> Buy Now
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white py-3 px-6 rounded-lg font-medium transition"
+                                >
+                                    <FaShoppingCart /> Add to Cart
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="w-full flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-900 dark:text-white py-3 px-6 rounded-lg font-medium transition"
+                                >
+                                    <FaHeart /> Add to Favorite
+                                </button>
+                            </div>
+
+                            {/* Farmer Contact */}
+                            <div className="bg-primary-50 dark:bg-primary-600 rounded-xl p-4 text-white">
+                                <div className="flex items-center space-x-3">
+                                    <Image
+                                        src={product.farmer.profilePicture || "https://images.unsplash.com/photo-10007003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face"}
+                                        alt={product.farmer.firstName + " " + product.farmer.lastName}
+                                        width={48}
+                                        height={48}
+                                        className="rounded-full"
+                                    />
+                                    <div>
+                                        <h4 className="font-semibold text-gray-900 dark:text-white">{product.farmer.firstName} {product.farmer.lastName}</h4>
+                                        <p className="text-sm text-gray-900 dark:text-white">
+                                            Farmer since {new Date(product.farmer.createdAt).toLocaleDateString("en-US", {
+                                                year: "numeric",
+                                                month: "long",
+                                                day: "numeric",
+                                            })}
+                                        </p>
+
+                                    </div>
+                                </div>
+                            </div>
+
+
+
                         </div>
                     </div>
                 </div>

@@ -173,7 +173,7 @@ export const FeaturedProduct = () => {
                                 </div>
                                 <button
                                     onClick={() => addToCart(product)}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-medium transition"
+                                    className="w-full bg-primary-500 hover:bg-emerald-700 text-white py-2 rounded-lg font-medium transition"
                                     aria-label={`Add ${product.productName} to cart`}
                                 >
                                     Add to Cart

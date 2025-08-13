@@ -37,7 +37,7 @@ export default function ProductsPage() {
     const [locations, setLocations] = useState([]);
     const [categories, setCategories] = useState(["All Categories"]);
     const [inputValue, setInputValue] = useState(keywordParam);
-    const productsPerPage = 12;
+    const productsPerPage = 6;
 
     const debouncedSetKeyword = debounce((value) => {
         setKeyword(value);
@@ -224,7 +224,7 @@ export default function ProductsPage() {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8 mt-8">
-                    <aside className="lg:w-1/4 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                    <aside className="lg:w-1/4 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm h-fit">
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                             Filters
                         </h2>

@@ -7,18 +7,22 @@ export async function GET(req, { params }) {
         await dbConnect();
 
         const { id } = params;
-        // console.log("Product ID from params:", id);
 
         if (!id) {
             return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
         }
 
-        const product = await Product.findById(id);
+        const product = await Product.findById(id)
+            .populate(
+                "farmer",
+                "farmName profilePicture firstName lastName createdAt"
+            );
+
+        // console.log("API returning product:", product);
+
         if (!product) {
             return NextResponse.json({ error: "Product not found" }, { status: 404 });
         }
-
-        // console.log("Product found:", product._id);
         return NextResponse.json(product);
     } catch (error) {
         console.error("Error fetching product:", error);
