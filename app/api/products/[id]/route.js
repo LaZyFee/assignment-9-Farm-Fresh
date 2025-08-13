@@ -15,7 +15,7 @@ export async function GET(req, { params }) {
         const product = await Product.findById(id)
             .populate(
                 "farmer",
-                "farmName profilePicture firstName lastName createdAt"
+                "farmName profilePicture firstName lastName createdAt address bio farmSize specialization"
             );
 
         // console.log("API returning product:", product);

@@ -70,7 +70,6 @@ export const Hero = () => {
     };
 
     if (error) return <div className="text-center py-16 text-red-500">{error}</div>;
-    if (loading) return <div className="text-center py-16">Loading...</div>;
 
     return (
         <section className="relative bg-gradient-to-r from-primary-600 to-primary-800 text-white">

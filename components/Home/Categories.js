@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { FaLeaf, FaSeedling } from "react-icons/fa";
 import { FaApple, FaCarrot, FaCheese, FaJar } from "react-icons/fa6";
 import Link from "next/link";
+import Loading from "./Loading";
 
 export const Categories = () => {
     const [categories, setCategories] = useState([]);
@@ -73,7 +74,7 @@ export const Categories = () => {
     }, []);
 
     if (error) return <div className="text-center py-16 text-red-500">{error}</div>;
-    if (loading) return <div className="text-center py-16">Loading...</div>;
+    if (loading) return <Loading />
 
     return (
         <section className="py-16 bg-white dark:bg-gray-800">

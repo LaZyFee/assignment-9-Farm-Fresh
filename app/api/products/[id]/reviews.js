@@ -6,10 +6,11 @@ export default async function handler(req, res) {
     const { id } = req.query;
     const { page = 1, limit = 5 } = req.query;
     const session = await auth();
-    if (!session || session.user.userType !== "farmer") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) {
+        return res.status(401).json({ error: "Unauthorized" });
     }
-    await dbConnect(); const userId = session?.user?.id;
+    await dbConnect();
+    const userId = session?.user?.id;
 
     try {
         const skip = (page - 1) * limit;

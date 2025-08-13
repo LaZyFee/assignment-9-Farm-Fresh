@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { FaBolt, FaHeart, FaMapMarkerAlt, FaMinus, FaPlus, FaShoppingCart, FaStar } from 'react-icons/fa';
 import Reviews from './Reviews';
 import RelatedProduct from './RelatedProduct';
+import ProductTabs from './ProductTabs';
 
 export default function ProductDetailsPage() {
     const params = useParams();
@@ -273,6 +274,7 @@ export default function ProductDetailsPage() {
                     </div>
                 </div>
             </div>
+            <ProductTabs product={product} />
             <Reviews product={product} />
             <RelatedProduct product={product} />
         </main>

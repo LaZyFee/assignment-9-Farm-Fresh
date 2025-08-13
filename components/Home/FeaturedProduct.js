@@ -1,5 +1,6 @@
 "use client";
 
+import Loading from "@/app/(main)/products/Loading";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -68,7 +69,7 @@ export const FeaturedProduct = () => {
     };
 
     if (error) return <div className="text-center py-16 text-red-500">{error}</div>;
-    if (loading) return <div className="text-center py-16">Loading...</div>;
+    if (loading) return <Loading />;
 
     return (
         <section className="py-16 bg-gray-50 dark:bg-gray-900">
