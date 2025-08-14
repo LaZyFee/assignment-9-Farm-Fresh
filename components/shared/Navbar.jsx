@@ -53,7 +53,7 @@ const Navbar = ({ sideMenu }) => {
     { name: "Home", href: "/" },
     { name: "Products", href: "/products" },
     { name: "Farmers", href: "/farmers" },
-    { name: "My Orders", href: "/my-orders" },
+    { name: "My Orders", href: "/bookings" },
     { name: "About", href: "/about" },
   ];
 

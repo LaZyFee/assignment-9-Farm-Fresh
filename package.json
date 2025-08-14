@@ -16,6 +16,7 @@
     "dotenv": "^17.2.1",
     "formidable": "^3.5.4",
     "js-levenshtein": "^1.1.6",
+    "jspdf": "^3.0.1",
     "lodash": "^4.17.21",
     "lucide-react": "^0.539.0",
     "mongoose": "^8.17.0",

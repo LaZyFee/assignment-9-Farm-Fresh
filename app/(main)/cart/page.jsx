@@ -4,11 +4,12 @@ import { useEffect } from "react";
 import { useCartStore } from "@/stores/cartStore";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart, setCart } =
     useCartStore();
-
+  const router = useRouter();
   useEffect(() => {
     async function fetchCart() {
       try {
@@ -34,9 +35,7 @@ export default function CartPage() {
   const total = subtotal + tax;
 
   const handleCheckout = () => {
-    // Placeholder for checkout logic
-    alert("Proceeding to checkout...");
-    // clearCart();
+    router.push("/payment");
   };
 
   return (
