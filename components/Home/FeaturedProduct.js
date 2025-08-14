@@ -8,16 +8,21 @@ import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useCartStore } from "@/stores/cartStore";
 import { FaArrowRight, FaHeart, FaStar } from "react-icons/fa";
 import Swal from "sweetalert2";
+import { useSession } from "next-auth/react";
 
 export const FeaturedProduct = () => {
+    const { data: session, status } = useSession();
     const [featuredProducts, setFeaturedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [imageError, setImageError] = useState({});
 
     const { favorites, toggleFavorite, setFavorites } = useFavoriteStore();
-    const { addToCart, setCart, cart } = useCartStore();
-
+    const cart = useCartStore((state) => state.cart);
+    const addToCart = useCartStore((state) => state.addToCart);
+    const fetchCart = useCartStore((state) => state.fetchCart);
+    const clearCart = useCartStore((state) => state.clearCart);
+    const farmer = session?.user?.userType === "farmer";
     useEffect(() => {
         async function fetchData() {
             try {
@@ -28,7 +33,7 @@ export const FeaturedProduct = () => {
                 const products = await res.json();
 
                 // Sort by sales count or created date
-                const sorted = products.some((p) => p.salesCount > 0)
+                const sorted = products.some((p) => p.salesCount && p.salesCount > 0)
                     ? [...products].sort((a, b) => b.salesCount - a.salesCount)
                     : [...products].sort(
                         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
@@ -42,12 +47,8 @@ export const FeaturedProduct = () => {
                 const favoritesData = await favoritesRes.json();
                 setFavorites(favoritesData.map((id) => id.toString()));
 
-                // Fetch cart
-                const cartRes = await fetch("/api/cart");
-                if (cartRes.ok) {
-                    const cartData = await cartRes.json();
-                    setCart(cartData);
-                }
+                // Fetch cart using Zustand
+                await fetchCart();
             } catch (err) {
                 console.error("Error fetching data:", err);
                 setError("Failed to load featured products or favorites");
@@ -56,46 +57,68 @@ export const FeaturedProduct = () => {
             }
         }
         fetchData();
-    }, [setFavorites, setCart]);
+    }, [status, setFavorites, fetchCart, clearCart]);
 
     const handleToggleFavorite = async (productId) => {
         try {
             await toggleFavorite(productId);
         } catch (err) {
             console.error("Failed to update favorite:", err);
-        }
-    };
-
-    const handleAddToCart = (product) => {
-        const cartItem = cart.find((item) => item.product._id.toString() === product._id.toString());
-        if (cartItem && cartItem.quantity >= product.stock) {
             Swal.fire({
                 icon: "error",
-                title: "Stock Limit Reached",
+                title: "Error",
                 toast: true,
                 position: "top",
                 showConfirmButton: false,
                 timer: 1500,
                 timerProgressBar: true,
-                text: `Cannot add more ${product.productName}. Only ${product.stock} ${product.unit} available.`,
+                text: "Failed to update favorite.",
             });
-            return;
         }
-        addToCart({ product, quantity: 1 });
-        Swal.fire({
-            icon: "success",
-            title: "Added to Cart",
-            toast: true,
-            position: "top",
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true,
-            text: `${product.productName} has been added to your cart.`,
-        });
     };
 
-    if (error)
-        return <div className="text-center py-16 text-red-500">{error}</div>;
+    const handleAddToCart = async (product) => {
+        try {
+            await addToCart({ product, quantity: 1 });
+            if (farmer) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Not Allowed",
+                    toast: true,
+                    position: "top",
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    text: "Farmers can't buy products.",
+                });
+                return;
+            }
+            Swal.fire({
+                icon: "success",
+                title: "Added to Cart",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: `${product.productName} has been added to your cart.`,
+            });
+        } catch (err) {
+            console.error("Failed to add to cart:", err);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: err.message || "Failed to add to cart.",
+            });
+        }
+    };
+
+    if (error) return <div className="text-center py-16 text-red-500">{error}</div>;
     if (loading) return <Loading />;
 
     return (
@@ -159,9 +182,7 @@ export const FeaturedProduct = () => {
                                             onClick={() => handleToggleFavorite(product._id)}
                                             className="bg-white dark:bg-gray-800 p-2 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                             aria-label={
-                                                isFavorite
-                                                    ? "Remove from favorites"
-                                                    : "Add to favorites"
+                                                isFavorite ? "Remove from favorites" : "Add to favorites"
                                             }
                                         >
                                             <FaHeart
@@ -219,7 +240,11 @@ export const FeaturedProduct = () => {
                                             ? "bg-gray-400 dark:bg-gray-600 text-gray-100 cursor-not-allowed"
                                             : "bg-primary-500 hover:bg-emerald-700 text-white"
                                             }`}
-                                        aria-label={isInCart ? `${product.productName} is already in cart` : `Add ${product.productName} to cart`}
+                                        aria-label={
+                                            isInCart
+                                                ? `${product.productName} is already in cart`
+                                                : `Add ${product.productName} to cart`
+                                        }
                                     >
                                         {isInCart ? "In Cart" : "Add to Cart"}
                                     </button>

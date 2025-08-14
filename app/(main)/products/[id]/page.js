@@ -14,8 +14,10 @@ import ProductTabs from './ProductTabs';
 import { useFavoriteStore } from '@/stores/favoriteStore';
 import { useCartStore } from '@/stores/cartStore';
 import Swal from 'sweetalert2';
+import { useSession } from 'next-auth/react';
 
 export default function ProductDetailsPage() {
+    const { data: session, status } = useSession();
     const params = useParams();
     const router = useRouter();
     const [product, setProduct] = useState(null);
@@ -25,12 +27,15 @@ export default function ProductDetailsPage() {
     const [quantity, setQuantity] = useState(1);
 
     const { favorites, toggleFavorite, setFavorites } = useFavoriteStore();
-    const { cart, addToCart, setCart } = useCartStore();
-
+    const cart = useCartStore((state) => state.cart);
+    const addToCart = useCartStore((state) => state.addToCart);
+    const fetchCart = useCartStore((state) => state.fetchCart);
+    const clearCart = useCartStore((state) => state.clearCart);
     const isInCart = cart.some(
         (item) => item.product._id.toString() === (product?._id?.toString() || '')
     );
     const isFavorite = favorites.includes(product?._id?.toString() || '');
+    const farmer = session?.user?.userType === "farmer";
 
     useEffect(() => {
         if (!params.id) return;
@@ -57,12 +62,8 @@ export default function ProductDetailsPage() {
                 const favoritesData = await favoritesRes.json();
                 setFavorites(favoritesData.map((id) => id.toString()));
 
-                // Fetch cart
-                const cartRes = await fetch("/api/cart");
-                if (cartRes.ok) {
-                    const cartData = await cartRes.json();
-                    setCart(cartData);
-                }
+                // Fetch cart using Zustand
+                await fetchCart();
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -71,7 +72,7 @@ export default function ProductDetailsPage() {
         };
 
         fetchData();
-    }, [params.id, router, setFavorites, setCart]);
+    }, [params.id, router, setFavorites, fetchCart]);
 
     const handleImageClick = (image) => {
         setMainImage(image);
@@ -97,6 +98,19 @@ export default function ProductDetailsPage() {
     };
 
     const handleAddToCart = () => {
+        if (farmer) {
+            Swal.fire({
+                icon: "error",
+                title: "Not Allowed",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                text: "Farmers can't buy products.",
+            });
+            return;
+        }
         if (!product) return;
         const cartItem = cart.find((item) => item.product._id.toString() === product._id.toString());
         const totalQuantity = (cartItem?.quantity || 0) + quantity - 1;
@@ -126,6 +140,19 @@ export default function ProductDetailsPage() {
         });
     };
     const handleBuyNow = () => {
+        if (farmer) {
+            Swal.fire({
+                icon: "error",
+                title: "Not Allowed",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                text: "Farmers can't buy products.",
+            });
+            return;
+        }
         handleAddToCart();
         if (!isInCart) {
             router.push('/cart');

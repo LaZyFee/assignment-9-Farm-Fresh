@@ -12,11 +12,11 @@ export async function GET() {
     await dbConnect();
 
     const user = await User.findById(session.user.id)
-        .populate("cart.product")
+        .populate({ path: "cart.product", strictPopulate: false })
         .select("cart")
         .lean();
 
-    return NextResponse.json(user.cart || []);
+    return NextResponse.json(user?.cart || []);
 }
 
 export async function POST(request) {
@@ -63,11 +63,10 @@ export async function POST(request) {
 
     await user.save();
 
-    // Repopulate cart for response
     const updatedUser = await User.findById(session.user.id)
-        .populate("cart.product")
+        .populate({ path: "cart.product", strictPopulate: false })
         .select("cart")
         .lean();
 
-    return NextResponse.json(updatedUser.cart || []);
+    return NextResponse.json(updatedUser?.cart || []);
 }

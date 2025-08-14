@@ -12,8 +12,10 @@ import { FaSearch } from "react-icons/fa";
 import { useFavoriteStore } from "@/stores/favoriteStore";
 import { useCartStore } from "@/stores/cartStore";
 import Swal from "sweetalert2";
+import { useSession } from "next-auth/react";
 
 export default function ProductsPage() {
+    const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
     const keywordParam = searchParams.get("keyword") || "";
@@ -41,7 +43,12 @@ export default function ProductsPage() {
     const productsPerPage = 6;
 
     const { favorites, toggleFavorite, setFavorites } = useFavoriteStore();
-    const { cart, addToCart, setCart } = useCartStore();
+    const cart = useCartStore((state) => state.cart);
+    const addToCart = useCartStore((state) => state.addToCart);
+    const fetchCart = useCartStore((state) => state.fetchCart);
+    const clearCart = useCartStore((state) => state.clearCart);
+    const farmer = session?.user?.userType === "farmer";
+
 
     const debouncedSetKeyword = debounce((value) => {
         setKeyword(value);
@@ -95,12 +102,8 @@ export default function ProductsPage() {
                 const favoritesData = await favoritesRes.json();
                 setFavorites(favoritesData.map((id) => id.toString()));
 
-                // Fetch cart
-                const cartRes = await fetch("/api/cart");
-                if (cartRes.ok) {
-                    const cartData = await cartRes.json();
-                    setCart(cartData);
-                }
+                // Fetch cart using Zustand
+                await fetchCart();
             } catch (err) {
                 console.error("Fetch error:", err);
                 setError(`Failed to load products: ${err.message}`);
@@ -109,7 +112,7 @@ export default function ProductsPage() {
             }
         }
         fetchData();
-    }, [setFavorites, setCart]);
+    }, [setFavorites, fetchCart]);
 
     const handleInputChange = (e) => {
         const value = e.target.value;
@@ -146,18 +149,45 @@ export default function ProductsPage() {
         }
     };
 
-    const handleAddToCart = (product) => {
-        addToCart({ product, quantity: 1 });
-        Swal.fire({
-            icon: "success",
-            title: "Added to Cart",
-            toast: true,
-            position: "top",
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true,
-            text: `${product.productName} has been added to your cart.`,
-        });
+    const handleAddToCart = async (product) => {
+        try {
+            await addToCart({ product, quantity: 1 });
+            if (farmer) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Not Allowed",
+                    toast: true,
+                    position: "top",
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    text: "Farmers can't buy products.",
+                });
+                return;
+            }
+            Swal.fire({
+                icon: "success",
+                title: "Added to Cart",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: `${product.productName} has been added to your cart.`,
+            });
+        } catch (err) {
+            console.error("Failed to add to cart:", err);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: err.message || "Failed to add to cart.",
+            });
+        }
     };
 
     const handleFilterChange = (filterType, value) => {
@@ -518,8 +548,8 @@ export default function ProductsPage() {
                                                         onClick={() => handleAddToCart(product)}
                                                         disabled={isInCart}
                                                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${isInCart
-                                                                ? "bg-gray-400 dark:bg-gray-600 text-gray-100 cursor-not-allowed"
-                                                                : "bg-primary-500 hover:bg-emerald-700 text-white"
+                                                            ? "bg-gray-400 dark:bg-gray-600 text-gray-100 cursor-not-allowed"
+                                                            : "bg-primary-500 hover:bg-emerald-700 text-white"
                                                             }`}
                                                         aria-label={
                                                             isInCart
