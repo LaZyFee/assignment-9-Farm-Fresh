@@ -49,7 +49,6 @@ export default function ProductsPage() {
     const clearCart = useCartStore((state) => state.clearCart);
     const farmer = session?.user?.userType === "farmer";
 
-
     const debouncedSetKeyword = debounce((value) => {
         setKeyword(value);
     }, 300);
@@ -150,21 +149,24 @@ export default function ProductsPage() {
     };
 
     const handleAddToCart = async (product) => {
+        // Check if user is farmer first
+        if (farmer) {
+            Swal.fire({
+                icon: "error",
+                title: "Not Allowed",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                text: "Farmers can't buy products.",
+            });
+            return;
+        }
+
         try {
             await addToCart({ product, quantity: 1 });
-            if (farmer) {
-                Swal.fire({
-                    icon: "error",
-                    title: "Not Allowed",
-                    toast: true,
-                    position: "top",
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true,
-                    text: "Farmers can't buy products.",
-                });
-                return;
-            }
+
             Swal.fire({
                 icon: "success",
                 title: "Added to Cart",
@@ -177,15 +179,19 @@ export default function ProductsPage() {
             });
         } catch (err) {
             console.error("Failed to add to cart:", err);
+
+            // Show appropriate error message
+            const errorMessage = err.message || "Failed to add to cart.";
+
             Swal.fire({
                 icon: "error",
-                title: "Error",
+                title: "Cannot Add to Cart",
                 toast: true,
                 position: "top",
                 showConfirmButton: false,
-                timer: 1500,
+                timer: 3000,
                 timerProgressBar: true,
-                text: err.message || "Failed to add to cart.",
+                text: errorMessage,
             });
         }
     };
@@ -549,7 +555,7 @@ export default function ProductsPage() {
                                                         disabled={isInCart}
                                                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${isInCart
                                                             ? "bg-gray-400 dark:bg-gray-600 text-gray-100 cursor-not-allowed"
-                                                            : "bg-primary-500 hover:bg-emerald-700 text-white"
+                                                            : "bg-emerald-600 hover:bg-emerald-700 text-white"
                                                             }`}
                                                         aria-label={
                                                             isInCart

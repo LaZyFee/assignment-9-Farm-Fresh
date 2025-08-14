@@ -97,7 +97,7 @@ export default function ProductDetailsPage() {
         }
     };
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         if (farmer) {
             Swal.fire({
                 icon: "error",
@@ -127,19 +127,37 @@ export default function ProductDetailsPage() {
             });
             return;
         }
-        addToCart({ product, quantity });
-        Swal.fire({
-            icon: "success",
-            title: "Added to Cart",
-            toast: true,
-            position: "top",
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true,
-            text: `${quantity} ${product.productName} has been added to your cart.`,
-        });
+        try {
+            await addToCart({ product, quantity });
+            Swal.fire({
+                icon: "success",
+                title: "Added to Cart",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: `${quantity} ${product.productName} has been added to your cart.`,
+            });
+        } catch (err) {
+            console.error("Failed to add to cart:", err);
+
+            // Show appropriate error message
+            const errorMessage = err.message || "Failed to add to cart.";
+
+            Swal.fire({
+                icon: "error",
+                title: "Cannot Add to Cart",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                text: errorMessage,
+            });
+        }
     };
-    const handleBuyNow = () => {
+    const handleBuyNow = async () => {
         if (farmer) {
             Swal.fire({
                 icon: "error",
@@ -153,7 +171,7 @@ export default function ProductDetailsPage() {
             });
             return;
         }
-        handleAddToCart();
+        await handleAddToCart();
         if (!isInCart) {
             router.push('/cart');
         }
