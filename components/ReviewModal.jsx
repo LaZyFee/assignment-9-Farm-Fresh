@@ -78,14 +78,16 @@ export default function ReviewModal({
     setIsSubmitting(true);
     setErrors({});
 
-    try {
-      await onSubmit({
-        rating,
-        comment: comment.trim(),
-        productId,
-        reviewId,
-      });
+    const payload = {
+      rating,
+      comment: comment.trim(),
+      productId,
+      reviewId,
+    };
+    console.log("Submitting review payload:", payload);
 
+    try {
+      await onSubmit(payload);
       setSuccess(true);
       setTimeout(() => {
         onClose();

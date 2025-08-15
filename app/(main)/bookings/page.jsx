@@ -136,20 +136,18 @@ export default function BookingsPage() {
   const openReviewModal = async (productId, productName) => {
     setSelectedProductId(productId);
     setSelectedProductName(productName);
-    setReviewModalOpen(true);
-
-    // Reset form
-    setRating(5);
     setComment("");
+    setRating(5);
+    setReviewModalOpen(true);
   };
 
-  const submitReview = async () => {
+  const submitReview = async ({ productId, rating, comment }) => {
     try {
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productId: selectedProductId,
+          productId,
           rating,
           comment,
         }),
@@ -158,10 +156,9 @@ export default function BookingsPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Update the review status for this specific product
         setReviewedProducts((prev) => {
           const newMap = new Map(prev);
-          newMap.set(selectedProductId, true);
+          newMap.set(productId, true);
           return newMap;
         });
         setReviewModalOpen(false);
@@ -172,7 +169,6 @@ export default function BookingsPage() {
       }
     } catch (error) {
       console.error("Error submitting review:", error);
-      // Error will be handled by the modal
       throw error;
     }
   };
