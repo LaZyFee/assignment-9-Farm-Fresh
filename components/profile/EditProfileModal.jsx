@@ -138,7 +138,6 @@ export default function EditProfileModal({ user, onClose }) {
 
         // Show success message if role changed
         if (result.roleChanged) {
-          // You can show a toast notification here
           console.log(result.message);
         }
 

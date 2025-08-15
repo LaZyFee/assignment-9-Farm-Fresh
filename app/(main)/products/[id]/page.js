@@ -7,7 +7,7 @@ import NotFound from './not-found';
 import ErrorComponent from './error';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaBolt, FaHeart, FaMapMarkerAlt, FaMinus, FaPlus, FaShoppingCart, FaStar } from 'react-icons/fa';
+import { FaBolt, FaHeart, FaMapMarkerAlt, FaMinus, FaPlus, FaShoppingCart, FaStar, FaEdit } from 'react-icons/fa';
 import Reviews from './Reviews';
 import RelatedProduct from './RelatedProduct';
 import ProductTabs from './ProductTabs';
@@ -15,6 +15,7 @@ import { useFavoriteStore } from '@/stores/favoriteStore';
 import { useCartStore } from '@/stores/cartStore';
 import Swal from 'sweetalert2';
 import { useSession } from 'next-auth/react';
+import ReviewModal from '@/components/ReviewModal';
 
 export default function ProductDetailsPage() {
     const { data: session, status } = useSession();
@@ -25,6 +26,9 @@ export default function ProductDetailsPage() {
     const [error, setError] = useState(null);
     const [mainImage, setMainImage] = useState();
     const [quantity, setQuantity] = useState(1);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+    const [canReview, setCanReview] = useState(false);
+    const [hasReviewed, setHasReviewed] = useState(false);
 
     const { favorites, toggleFavorite, setFavorites } = useFavoriteStore();
     const cart = useCartStore((state) => state.cart);
@@ -64,6 +68,11 @@ export default function ProductDetailsPage() {
 
                 // Fetch cart using Zustand
                 await fetchCart();
+
+                // Check review eligibility
+                if (session?.user?.id) {
+                    await checkReviewEligibility();
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -72,7 +81,25 @@ export default function ProductDetailsPage() {
         };
 
         fetchData();
-    }, [params.id, router, setFavorites, fetchCart]);
+    }, [params.id, router, setFavorites, fetchCart, session?.user?.id]);
+
+    const checkReviewEligibility = async () => {
+        if (!session?.user?.id) return;
+
+        try {
+            // Check if user can review
+            const res = await fetch(`/api/orders/can-review?productId=${params.id}`);
+            const data = await res.json();
+            setCanReview(data.canReview);
+
+            // Check if user has already reviewed
+            const reviewRes = await fetch(`/api/reviews?productId=${params.id}&userId=${session.user.id}`);
+            const reviewData = await reviewRes.json();
+            setHasReviewed(reviewData.hasReviewed);
+        } catch (error) {
+            console.error('Error checking review eligibility:', error);
+        }
+    };
 
     const handleImageClick = (image) => {
         setMainImage(image);
@@ -157,6 +184,7 @@ export default function ProductDetailsPage() {
             });
         }
     };
+
     const handleBuyNow = async () => {
         if (farmer) {
             Swal.fire({
@@ -177,6 +205,63 @@ export default function ProductDetailsPage() {
         }
     };
 
+    const handleWriteReview = () => {
+        if (!session) {
+            Swal.fire({
+                icon: "info",
+                title: "Login Required",
+                text: "Please login to write a review.",
+                confirmButtonText: "Login",
+                showCancelButton: true,
+                cancelButtonText: "Cancel",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    router.push('/auth/signin');
+                }
+            });
+            return;
+        }
+
+        if (!canReview) {
+            Swal.fire({
+                icon: "info",
+                title: "Cannot Review",
+                text: "You must purchase and receive this product to write a review.",
+                confirmButtonText: "OK"
+            });
+            return;
+        }
+
+        if (hasReviewed) {
+            Swal.fire({
+                icon: "info",
+                title: "Already Reviewed",
+                text: "You have already reviewed this product.",
+                confirmButtonText: "OK"
+            });
+            return;
+        }
+
+        setShowReviewModal(true);
+    };
+
+    const handleReviewSubmit = async () => {
+        // Refresh review status
+        await checkReviewEligibility();
+        setShowReviewModal(false);
+
+        // Show success message
+        Swal.fire({
+            icon: "success",
+            title: "Review Submitted!",
+            text: "Thank you for your feedback.",
+            toast: true,
+            position: "top",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+        });
+    };
 
     if (loading) return <ProductDetailsSkeleton />;
     if (error) return <ErrorComponent error={error} />;
@@ -200,6 +285,23 @@ export default function ProductDetailsPage() {
                         </li>
                         <li className="text-gray-400 dark:text-gray-600">/</li>
                         <li className="text-gray-600 dark:text-gray-400 truncate">
+                            {/* Review Modal */}
+                            {showReviewModal && (
+                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                                        <div className="p-6">
+                                            <ReviewModal
+                                                productId={product._id}
+                                                productName={product.productName}
+                                                onClose={() => setShowReviewModal(false)}
+                                                onSubmit={handleReviewSubmit}
+                                                hasReviewed={false}
+                                                isEditing={false}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             {product.productName}
                         </li>
                     </ol>
@@ -276,7 +378,11 @@ export default function ProductDetailsPage() {
                                     <span className="text-lg font-semibold text-gray-900 dark:text-white">{product.rating || 0}</span>
                                 </div>
                                 <span className="text-gray-500 dark:text-gray-400">({product.reviewsCount || 0} reviews)</span>
-                                <button className="text-primary-600 dark:text-primary-400 hover:underline">
+                                <button
+                                    onClick={handleWriteReview}
+                                    className="text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                                >
+                                    <FaEdit className="text-sm" />
                                     Write a review
                                 </button>
                             </div>
@@ -397,6 +503,7 @@ export default function ProductDetailsPage() {
                     </div>
                 </div>
             </div>
+
             <ProductTabs product={product} />
             <Reviews product={product} />
             <RelatedProduct product={product} />

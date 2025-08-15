@@ -39,7 +39,7 @@ export async function GET(request, { params }) {
 
         try {
             const existingPDF = await fs.readFile(filepath);
-            console.log(`Serving existing PDF: ${filename}`);
+            // console.log(`Serving existing PDF: ${filename}`);
 
             return new NextResponse(existingPDF, {
                 headers: {
@@ -59,7 +59,7 @@ export async function GET(request, { params }) {
         try {
             await fs.mkdir(invoicesDir, { recursive: true });
             await fs.writeFile(filepath, pdfBuffer);
-            console.log(`PDF generated and stored: ${filename}`);
+            // console.log(`PDF generated and stored: ${filename}`);
         } catch (storageError) {
             console.error("Failed to store PDF:", storageError);
             // Continue anyway - serving the PDF is more important

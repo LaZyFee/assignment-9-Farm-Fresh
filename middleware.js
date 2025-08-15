@@ -47,7 +47,7 @@ export default auth((req) => {
 
     // Check authentication for protected routes
     if (!isAuthenticated && !isPublicRoute) {
-        console.log("Redirecting to login from:", nextUrl.pathname);
+        // console.log("Redirecting to login from:", nextUrl.pathname);
         return Response.redirect(new URL(LOGIN, nextUrl));
     }
 

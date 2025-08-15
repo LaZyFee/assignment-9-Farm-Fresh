@@ -3,8 +3,11 @@
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
+import { FaStar } from "react-icons/fa";
 import Swal from "sweetalert2";
 function Reviews({ product }) {
+  console.log(product);
+  console.log(product.reviews);
   const { data: session, status } = useSession();
   const [reviews, setReviews] = useState([]);
   const [canReview, setCanReview] = useState(false);
@@ -83,8 +86,8 @@ function Reviews({ product }) {
         toast.success("Review submitted!");
         setShowReviewForm(false);
         setFormData({ rating: 5, text: "" });
-        fetchReviews(1); // Refresh reviews
-        checkCanReview(); // Recheck eligibility
+        fetchReviews(1);
+        checkCanReview();
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to submit review");
@@ -108,7 +111,7 @@ function Reviews({ product }) {
         setShowReviewForm(false);
         setEditReview(null);
         setFormData({ rating: 5, text: "" });
-        fetchReviews(1); // Refresh reviews
+        fetchReviews(1);
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to update review");
@@ -127,8 +130,8 @@ function Reviews({ product }) {
       });
       if (res.ok) {
         toast.success("Review deleted!");
-        fetchReviews(1); // Refresh reviews
-        checkCanReview(); // Recheck eligibility
+        fetchReviews(1);
+        checkCanReview();
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to delete review");
@@ -277,22 +280,23 @@ function Reviews({ product }) {
             >
               <div className="flex items-start space-x-4">
                 <Image
-                  src={review.user.image || "/default-user.jpg"}
-                  alt={review.user.name}
+                  src={review.user.profilePicture || "/default-user.jpg"}
+                  alt={`${review.user.firstName} ${review.user.lastName}`}
                   width={48}
                   height={48}
                   className="rounded-full"
                 />
+
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-white">
-                        {review.user.name}
+                        {review.user.firstName} {review.user.lastName}
                       </h4>
                       <div className="flex items-center space-x-2">
                         <div className="flex text-yellow-400 text-sm">
                           {[...Array(review.rating)].map((_, i) => (
-                            <i key={i} className="fas fa-star"></i>
+                            <FaStar key={i} className="fas fa-star"></FaStar>
                           ))}
                           {[...Array(5 - review.rating)].map((_, i) => (
                             <i key={i} className="far fa-star"></i>
@@ -314,7 +318,7 @@ function Reviews({ product }) {
                               setEditReview(review);
                               setFormData({
                                 rating: review.rating,
-                                text: review.text,
+                                text: review.comment,
                               });
                               setShowReviewForm(true);
                             }}
@@ -333,17 +337,8 @@ function Reviews({ product }) {
                     )}
                   </div>
                   <p className="text-gray-700 dark:text-gray-300 mb-3">
-                    {review.text}
+                    {review.comment}
                   </p>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                    <button className="hover:text-primary-600 dark:hover:text-primary-400">
-                      <i className="far fa-thumbs-up mr-1"></i>Helpful (
-                      {review.helpful})
-                    </button>
-                    <button className="hover:text-primary-600 dark:hover:text-primary-400">
-                      Reply
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>

@@ -22,6 +22,7 @@ export async function GET(request, { params }) {
         const order = await Order.findById(orderId)
             .populate({
                 path: 'items.product',
+                select: 'productName images unit price farmer category status',
                 populate: {
                     path: 'farmer',
                     select: 'farmName name'

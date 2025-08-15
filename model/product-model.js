@@ -17,7 +17,12 @@ const productSchema = new mongoose.Schema(
         rating: { type: Number, default: 0 },
         reviewsCount: { type: Number, default: 0 },
         salesCount: { type: Number, default: 0 },
-        reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review", default: [] }],
+        reviews: [
+            {
+                reviewId: { type: mongoose.Schema.Types.ObjectId, ref: "Review", required: true },
+                reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+            }
+        ],
     },
     { timestamps: true }
 );
