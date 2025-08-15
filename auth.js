@@ -5,7 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import userModel from "./model/user-model";
 import { dbConnect } from "./service/mongo";
-import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import mongoClientPromise from "./service/mongoClinetPromise";
 
 async function refreshAccessToken(token) {
