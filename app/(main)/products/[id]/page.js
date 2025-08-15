@@ -47,27 +47,31 @@ export default function ProductDetailsPage() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Fetch product
+
                 const res = await fetch(`/api/products/${params.id}`);
                 if (res.status === 404) {
-                    router.push('/404');
+                    router.push("/404");
                     return;
                 }
                 if (!res.ok) {
-                    throw new Error('Failed to fetch product');
+                    throw new Error("Failed to fetch product");
                 }
+
                 const productData = await res.json();
                 setProduct(productData);
                 setMainImage(productData.images[0]);
 
-                // Fetch favorites
-                const favoritesRes = await fetch("/api/favorites");
-                if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
-                const favoritesData = await favoritesRes.json();
-                setFavorites(favoritesData.map((id) => id.toString()));
+                if (status === "authenticated") {
+                    const favoritesRes = await fetch("/api/favorites");
+                    if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
+                    const favoritesData = await favoritesRes.json();
+                    setFavorites(favoritesData.map((id) => id.toString()));
+                } else {
+                    setFavorites([]);
+                }
 
-                // Fetch cart using Zustand
                 await fetchCart();
+
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -76,7 +80,8 @@ export default function ProductDetailsPage() {
         };
 
         fetchData();
-    }, [params.id, router, setFavorites, fetchCart]);
+    }, [params.id, status, router, setFavorites, fetchCart]);
+
 
     const checkReviewEligibility = async () => {
         if (!session?.user?.id) return false;
@@ -154,6 +159,21 @@ export default function ProductDetailsPage() {
 
     const handleToggleFavorite = async () => {
         if (!product) return;
+
+        if (!session) {
+            Swal.fire({
+                icon: "error",
+                title: "Login Required",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: "Please log in to manage favorites.",
+            });
+            return;
+        }
+
         try {
             await toggleFavorite(product._id);
         } catch (err) {
@@ -170,6 +190,7 @@ export default function ProductDetailsPage() {
             });
         }
     };
+
 
     const handleAddToCart = async () => {
         if (farmer) {

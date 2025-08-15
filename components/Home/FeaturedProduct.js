@@ -28,12 +28,13 @@ export const FeaturedProduct = () => {
         async function fetchData() {
             try {
                 setLoading(true);
+
                 // Fetch products
                 const res = await fetch("/api/products", { cache: "no-store" });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const products = await res.json();
 
-                // Sort by sales count or created date
+                // Sort
                 const sorted = products.some((p) => p.salesCount && p.salesCount > 0)
                     ? [...products].sort((a, b) => b.salesCount - a.salesCount)
                     : [...products].sort(
@@ -42,25 +43,46 @@ export const FeaturedProduct = () => {
 
                 setFeaturedProducts(sorted.filter((p) => p.stock > 0).slice(0, 8));
 
-                // Fetch favorites
-                const favoritesRes = await fetch("/api/favorites");
-                if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
-                const favoritesData = await favoritesRes.json();
-                setFavorites(favoritesData.map((id) => id.toString()));
+                // Fetch favorites only if logged in
+                if (status === "authenticated") {
+                    const favoritesRes = await fetch("/api/favorites");
+                    if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
+                    const favoritesData = await favoritesRes.json();
+                    setFavorites(favoritesData.map((id) => id.toString()));
+                } else {
+                    setFavorites([]);
+                }
 
-                // Fetch cart using Zustand
+                // Fetch cart
                 await fetchCart();
+
             } catch (err) {
                 console.error("Error fetching data:", err);
-                setError("Failed to load featured products or favorites");
+                setError("Failed to load featured products.");
             } finally {
                 setLoading(false);
             }
         }
+
         fetchData();
     }, [status, setFavorites, fetchCart, clearCart]);
 
+
     const handleToggleFavorite = async (productId) => {
+        if (!session) {
+            Swal.fire({
+                icon: "error",
+                title: "Login Required",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: "Please log in to add favorites.",
+            });
+            return;
+        }
+
         try {
             await toggleFavorite(productId);
         } catch (err) {
@@ -77,6 +99,7 @@ export const FeaturedProduct = () => {
             });
         }
     };
+
 
     const handleAddToCart = async (product) => {
         // Check if user is farmer

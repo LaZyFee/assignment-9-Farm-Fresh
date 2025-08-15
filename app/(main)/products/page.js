@@ -61,18 +61,17 @@ export default function ProductsPage() {
         async function fetchData() {
             try {
                 setLoading(true);
-                // Fetch products
+
                 const res = await fetch("/api/products", { cache: "no-store" });
                 if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
                 const data = await res.json();
                 setProducts(Array.isArray(data) ? data : []);
 
-                // Group categories and count
                 const categoryMap = {};
                 const locationSet = new Set();
                 data.forEach((product) => {
-                    categoryMap[product.category.toLowerCase()] =
-                        (categoryMap[product.category.toLowerCase()] || 0) + 1;
+                    const catLower = product.category.toLowerCase();
+                    categoryMap[catLower] = (categoryMap[catLower] || 0) + 1;
                     if (product.farmLocation) {
                         const city = product.farmLocation.split(",")[0].trim();
                         locationSet.add(city);
@@ -80,10 +79,8 @@ export default function ProductsPage() {
                 });
 
                 setCategoryCounts(
-                    Object.entries(categoryMap).map(([label, count]) => ({
-                        label,
-                        count,
-                    })) || [{ label: "No categories", count: 0 }]
+                    Object.entries(categoryMap).map(([label, count]) => ({ label, count })) ||
+                    [{ label: "No categories", count: 0 }]
                 );
 
                 const uniqueCategories = Array.from(
@@ -95,14 +92,17 @@ export default function ProductsPage() {
                 setCategories(["All Categories", ...formattedCategories]);
                 setLocations(Array.from(locationSet));
 
-                // Fetch favorites
-                const favoritesRes = await fetch("/api/favorites");
-                if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
-                const favoritesData = await favoritesRes.json();
-                setFavorites(favoritesData.map((id) => id.toString()));
+                if (status === "authenticated") {
+                    const favoritesRes = await fetch("/api/favorites");
+                    if (!favoritesRes.ok) throw new Error("Failed to fetch favorites");
+                    const favoritesData = await favoritesRes.json();
+                    setFavorites(favoritesData.map((id) => id.toString()));
+                } else {
+                    setFavorites([]);
+                }
 
-                // Fetch cart using Zustand
                 await fetchCart();
+
             } catch (err) {
                 console.error("Fetch error:", err);
                 setError(`Failed to load products: ${err.message}`);
@@ -110,8 +110,10 @@ export default function ProductsPage() {
                 setLoading(false);
             }
         }
+
         fetchData();
-    }, [setFavorites, fetchCart]);
+    }, [status, setFavorites, fetchCart]);
+
 
     const handleInputChange = (e) => {
         const value = e.target.value;
@@ -131,6 +133,20 @@ export default function ProductsPage() {
     };
 
     const handleToggleFavorite = async (productId) => {
+        if (!session) {
+            Swal.fire({
+                icon: "error",
+                title: "Login Required",
+                toast: true,
+                position: "top",
+                showConfirmButton: false,
+                timer: 1500,
+                timerProgressBar: true,
+                text: "Please log in to add favorites.",
+            });
+            return;
+        }
+
         try {
             await toggleFavorite(productId);
         } catch (err) {
@@ -143,7 +159,7 @@ export default function ProductsPage() {
                 showConfirmButton: false,
                 timer: 1500,
                 timerProgressBar: true,
-                text: "Failed to update favorite. Please try again.",
+                text: "Failed to update favorite.",
             });
         }
     };
