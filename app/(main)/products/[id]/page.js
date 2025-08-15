@@ -68,11 +68,6 @@ export default function ProductDetailsPage() {
 
                 // Fetch cart using Zustand
                 await fetchCart();
-
-                // Check review eligibility
-                if (session?.user?.id) {
-                    await checkReviewEligibility();
-                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -81,23 +76,75 @@ export default function ProductDetailsPage() {
         };
 
         fetchData();
-    }, [params.id, router, setFavorites, fetchCart, session?.user?.id]);
+    }, [params.id, router, setFavorites, fetchCart]);
 
     const checkReviewEligibility = async () => {
-        if (!session?.user?.id) return;
+        if (!session?.user?.id) return false;
 
         try {
-            // Check if user can review
-            const res = await fetch(`/api/orders/can-review?productId=${params.id}`);
+            const res = await fetch(`/api/products/${params.id}/can-review`);
             const data = await res.json();
-            setCanReview(data.canReview);
 
-            // Check if user has already reviewed
-            const reviewRes = await fetch(`/api/reviews?productId=${params.id}&userId=${session.user.id}`);
-            const reviewData = await reviewRes.json();
-            setHasReviewed(reviewData.hasReviewed);
+            if (!res.ok) {
+                if (res.status === 401) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Unauthorized',
+                        toast: true,
+                        position: 'top',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                        text: 'Please log in to write a review.',
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Server Error',
+                        toast: true,
+                        position: 'top',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true,
+                        text: data.error || 'Failed to check review eligibility.',
+                    });
+                }
+                setCanReview(false);
+                setHasReviewed(false);
+                return false;
+            }
+
+            setCanReview(data.canReview);
+            setHasReviewed(
+                !data.canReview && /already reviewed/i.test(data.reason)
+            );
+            if (!data.canReview) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Cannot Review',
+                    toast: true,
+                    position: 'top',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true,
+                    text: data.reason || 'You cannot review this product.',
+                });
+            }
+            return data.canReview;
         } catch (error) {
-            console.error('Error checking review eligibility:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Network Error',
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                text: 'Failed to connect to the server. Please try again.',
+            });
+            setCanReview(false);
+            setHasReviewed(false);
+            return false;
         }
     };
 
@@ -168,10 +215,7 @@ export default function ProductDetailsPage() {
             });
         } catch (err) {
             console.error("Failed to add to cart:", err);
-
-            // Show appropriate error message
             const errorMessage = err.message || "Failed to add to cart.";
-
             Swal.fire({
                 icon: "error",
                 title: "Cannot Add to Cart",
@@ -205,7 +249,7 @@ export default function ProductDetailsPage() {
         }
     };
 
-    const handleWriteReview = () => {
+    const handleWriteReview = async () => {
         if (!session) {
             Swal.fire({
                 icon: "info",
@@ -222,34 +266,17 @@ export default function ProductDetailsPage() {
             return;
         }
 
-        if (!canReview) {
-            Swal.fire({
-                icon: "info",
-                title: "Cannot Review",
-                text: "You must purchase and receive this product to write a review.",
-                confirmButtonText: "OK"
-            });
-            return;
+        // Check review eligibility when the button is clicked
+        const canReviewProduct = await checkReviewEligibility();
+        if (canReviewProduct) {
+            setShowReviewModal(true);
         }
-
-        if (hasReviewed) {
-            Swal.fire({
-                icon: "info",
-                title: "Already Reviewed",
-                text: "You have already reviewed this product.",
-                confirmButtonText: "OK"
-            });
-            return;
-        }
-
-        setShowReviewModal(true);
     };
 
     const handleReviewSubmit = async () => {
+        setShowReviewModal(false);
         // Refresh review status
         await checkReviewEligibility();
-        setShowReviewModal(false);
-
         // Show success message
         Swal.fire({
             icon: "success",
@@ -258,7 +285,7 @@ export default function ProductDetailsPage() {
             toast: true,
             position: "top",
             showConfirmButton: false,
-            timer: 3000,
+            timer: 2000,
             timerProgressBar: true,
         });
     };

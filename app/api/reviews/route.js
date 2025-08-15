@@ -21,7 +21,14 @@ export async function POST(req) {
         // Validate input
         if (!productId || !rating || rating < 1 || rating > 5) {
             return NextResponse.json(
-                { error: "Invalid product ID or rating" },
+                { error: "Invalid product ID or rating. Rating must be between 1 and 5." },
+                { status: 400 }
+            );
+        }
+
+        if (!comment || !comment.trim()) {
+            return NextResponse.json(
+                { error: "Review comment is required." },
                 { status: 400 }
             );
         }
@@ -31,6 +38,15 @@ export async function POST(req) {
             return NextResponse.json(
                 { error: "Invalid ID format" },
                 { status: 400 }
+            );
+        }
+
+        // Verify product exists
+        const product = await Product.findById(productId);
+        if (!product) {
+            return NextResponse.json(
+                { error: "Product not found" },
+                { status: 404 }
             );
         }
 
@@ -66,16 +82,19 @@ export async function POST(req) {
             product: productId,
             user: userId,
             rating,
-            comment: comment?.trim() || "",
+            comment: comment.trim(),
         });
 
         await review.save();
 
-        // Update product rating and review count
+        // Populate user data
+        await review.populate('user', 'firstName lastName profilePicture _id');
+
+        // Recalculate product rating and review count
         const allReviews = await Review.find({ product: productId });
         const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
 
-        // Fix: Use proper ObjectId conversion and correct update syntax
+        // Update product with new rating and review count
         await Product.findByIdAndUpdate(
             productId,
             {
@@ -92,96 +111,23 @@ export async function POST(req) {
         );
 
         return NextResponse.json(
-            { message: "Review submitted successfully", review },
+            {
+                message: "Review submitted successfully",
+                review: {
+                    _id: review._id,
+                    rating: review.rating,
+                    comment: review.comment,
+                    user: review.user,
+                    product: review.product,
+                    createdAt: review.createdAt,
+                    updatedAt: review.updatedAt
+                }
+            },
             { status: 201 }
         );
 
     } catch (error) {
         console.error("Error creating review:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
-    }
-}
-
-// Get reviews for a product or user
-export async function GET(req) {
-    try {
-        await dbConnect();
-
-        const { searchParams } = new URL(req.url);
-        const productId = searchParams.get('productId');
-        const userId = searchParams.get('userId');
-        const page = parseInt(searchParams.get('page')) || 1;
-        const limit = parseInt(searchParams.get('limit')) || 10;
-
-        // Validate ObjectId formats if provided
-        if (productId && !mongoose.Types.ObjectId.isValid(productId)) {
-            return NextResponse.json({ error: "Invalid product ID format" }, { status: 400 });
-        }
-        if (userId && !mongoose.Types.ObjectId.isValid(userId)) {
-            return NextResponse.json({ error: "Invalid user ID format" }, { status: 400 });
-        }
-
-        // Check if user has reviewed a specific product
-        if (productId && userId) {
-            const existingReview = await Review.findOne({
-                product: productId,
-                user: userId,
-            });
-
-            return NextResponse.json({ hasReviewed: !!existingReview });
-        }
-
-        // Get all reviews for a product with pagination
-        if (productId) {
-            const skip = (page - 1) * limit;
-
-            const reviews = await Review.find({ product: productId, status: 'active' })
-                .populate('user', 'name image')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
-
-            const totalReviews = await Review.countDocuments({ product: productId, status: 'active' });
-            const hasMore = skip + reviews.length < totalReviews;
-
-            return NextResponse.json({
-                reviews,
-                totalReviews,
-                hasMore,
-                currentPage: page,
-                totalPages: Math.ceil(totalReviews / limit)
-            });
-        }
-
-        // Get all reviews by a user
-        if (userId) {
-            const skip = (page - 1) * limit;
-
-            const reviews = await Review.find({ user: userId, status: 'active' })
-                .populate('product', 'productName images')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limit);
-
-            const totalReviews = await Review.countDocuments({ user: userId, status: 'active' });
-            const hasMore = skip + reviews.length < totalReviews;
-
-            return NextResponse.json({
-                reviews,
-                totalReviews,
-                hasMore,
-                currentPage: page,
-                totalPages: Math.ceil(totalReviews / limit)
-            });
-        }
-
-        return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
-
-    } catch (error) {
-        console.error("Error fetching reviews:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

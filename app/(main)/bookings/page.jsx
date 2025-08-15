@@ -29,7 +29,7 @@ export default function BookingsPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [Loading, setLoading] = useState(true);
-  const [reviewedProducts, setReviewedProducts] = useState(new Map()); // Using Map to store review status per product
+  const [reviewedProducts, setReviewedProducts] = useState(new Map());
   const router = useRouter();
   const addToCart = useCartStore((state) => state.addToCart);
 
@@ -72,11 +72,6 @@ export default function BookingsPage() {
           allProductIds.add(productId);
         });
       });
-
-      console.log(
-        "Checking review status for products:",
-        Array.from(allProductIds)
-      );
 
       // Check review status for each product
       const checkPromises = Array.from(allProductIds).map(async (productId) => {

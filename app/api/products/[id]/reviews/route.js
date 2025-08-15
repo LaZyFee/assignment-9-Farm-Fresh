@@ -58,13 +58,23 @@ export async function GET(req, { params }) {
         // Get total count for pagination
         const totalReviews = await Review.countDocuments({ product: productId });
         const totalOtherReviews = userReview ? totalReviews - 1 : totalReviews;
-        const hasMore = skip + otherReviews.length < totalOtherReviews;
-        // console.log("hasMore:", hasMore, "skip:", skip, "otherReviews.length:", otherReviews.length, "totalOtherReviews:", totalOtherReviews, reviews);
+
+        // Calculate if there are more pages
+        let hasMore = false;
+        if (page === 1 && userReview) {
+            // On first page with user review, check if there are more other reviews
+            hasMore = otherReviews.length === limit && skip + otherReviews.length < totalOtherReviews;
+        } else {
+            // On other pages or no user review, standard pagination
+            hasMore = skip + otherReviews.length < totalOtherReviews;
+        }
+
         return NextResponse.json({
             reviews,
             totalReviews,
             hasMore,
-            currentPage: page
+            currentPage: page,
+            hasUserReview: !!userReview
         });
 
     } catch (error) {

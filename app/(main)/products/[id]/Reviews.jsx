@@ -1,25 +1,26 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
+import ReviewModal from "@/components/ReviewModal";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { FaStar } from "react-icons/fa";
 import Swal from "sweetalert2";
+
 function Reviews({ product }) {
-  console.log(product);
-  console.log(product.reviews);
   const { data: session, status } = useSession();
   const [reviews, setReviews] = useState([]);
   const [canReview, setCanReview] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [editReview, setEditReview] = useState(null);
-  const [formData, setFormData] = useState({ rating: 5, text: "" });
+  const [reviewReasons, setReviewReasons] = useState([]);
+  const [userReview, setUserReview] = useState(null);
 
   // Fetch reviews
-  const fetchReviews = async (pageNum) => {
+  const fetchReviews = async (pageNum = 1) => {
     setLoading(true);
     try {
       const res = await fetch(
@@ -30,8 +31,15 @@ function Reviews({ product }) {
         setReviews((prev) =>
           pageNum === 1 ? data.reviews : [...prev, ...data.reviews]
         );
+        setHasMore(data.hasMore);
 
-        setHasMore(data.reviews.length > 5);
+        // Check if user's review is included
+        if (session && pageNum === 1) {
+          const userReviewInList = data.reviews.find(
+            (review) => review.user._id === session.user.id
+          );
+          setUserReview(userReviewInList);
+        }
       } else {
         Swal.fire({
           icon: "error",
@@ -45,12 +53,21 @@ function Reviews({ product }) {
       }
     } catch (error) {
       console.error("Error fetching reviews:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        toast: true,
+        position: "top",
+        showConfirmButton: false,
+        timer: 3000,
+        text: "Failed to load reviews",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  //  if user can review
+  // Check if user can review
   const checkCanReview = async () => {
     if (!session) return;
     try {
@@ -58,6 +75,7 @@ function Reviews({ product }) {
       const data = await res.json();
       if (res.ok) {
         setCanReview(data.canReview);
+        setReviewReasons(data.reasons || []);
       }
     } catch (error) {
       console.error("Error checking review eligibility:", error);
@@ -66,86 +84,144 @@ function Reviews({ product }) {
 
   useEffect(() => {
     fetchReviews(1);
-    checkCanReview();
-  }, [product._id, session]);
+    if (status === "authenticated") {
+      checkCanReview();
+    }
+  }, [product._id, session, status]);
 
   // Handle review submission
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
+  const handleReviewSubmit = async (reviewData) => {
     try {
-      const res = await fetch("/api/reviews/create", {
+      const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: product._id,
-          rating: formData.rating,
-          text: formData.text,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
         }),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
-        toast.success("Review submitted!");
-        setShowReviewForm(false);
-        setFormData({ rating: 5, text: "" });
+        Swal.fire({
+          icon: "success",
+          title: "Review submitted!",
+          toast: true,
+          position: "top",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        setShowReviewModal(false);
+        // Refresh reviews and check eligibility
         fetchReviews(1);
         checkCanReview();
+        setPage(1);
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to submit review");
+        throw new Error(data.error || "Failed to submit review");
       }
     } catch (error) {
-      toast.error("Error submitting review");
+      console.error("Error submitting review:", error);
+      throw error; // Let ReviewModal handle the error
     }
   };
 
   // Handle edit review
-  const handleEditReview = async (e) => {
-    e.preventDefault();
+  const handleEditReview = async (reviewData) => {
     try {
-      const res = await fetch(`/api/reviews/${editReview._id}/edit`, {
+      const res = await fetch(`/api/reviews/${editReview._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+        }),
       });
+
+      const data = await res.json();
+
       if (res.ok) {
-        toast.success("Review updated!");
-        setShowReviewForm(false);
+        Swal.fire({
+          icon: "success",
+          title: "Review updated!",
+          toast: true,
+          position: "top",
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        setShowReviewModal(false);
         setEditReview(null);
-        setFormData({ rating: 5, text: "" });
         fetchReviews(1);
+        setPage(1);
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to update review");
+        throw new Error(data.error || "Failed to update review");
       }
     } catch (error) {
-      toast.error("Error updating review");
+      console.error("Error updating review:", error);
+      throw error; // Let ReviewModal handle the error
     }
   };
 
   // Handle delete review
   const handleDeleteReview = async (reviewId) => {
-    if (!confirm("Are you sure you want to delete this review?")) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      const res = await fetch(`/api/reviews/${reviewId}/delete`, {
+      const res = await fetch(`/api/reviews/${reviewId}`, {
         method: "DELETE",
       });
+
+      const data = await res.json();
+
       if (res.ok) {
-        toast.success("Review deleted!");
+        Swal.fire({
+          icon: "success",
+          title: "Review deleted!",
+          toast: true,
+          position: "top",
+          showConfirmButton: false,
+          timer: 2000,
+        });
         fetchReviews(1);
         checkCanReview();
+        setPage(1);
+        setUserReview(null);
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to delete review");
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: data.error || "Failed to delete review",
+        });
       }
     } catch (error) {
-      toast.error("Error deleting review");
+      console.error("Error deleting review:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Error deleting review",
+      });
     }
   };
 
   // Load more reviews
   const loadMoreReviews = () => {
-    setPage((prev) => prev + 1);
-    fetchReviews(page + 1);
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchReviews(nextPage);
   };
+
+  // Calculate rating summary
   const ratingSummary = [5, 4, 3, 2, 1].map((star) => {
     const count = reviews.filter((r) => r.rating === star).length;
     const total = reviews.length || 1;
@@ -160,9 +236,9 @@ function Reviews({ product }) {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Customer Reviews
           </h2>
-          {session && canReview && (
+          {session && canReview && !userReview && (
             <button
-              onClick={() => setShowReviewForm(true)}
+              onClick={() => setShowReviewModal(true)}
               className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition"
             >
               Write a Review
@@ -170,65 +246,27 @@ function Reviews({ product }) {
           )}
         </div>
 
-        {/* Review Form */}
-        {showReviewForm && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 mb-8">
-            <h3 className="text-lg font-semibold mb-4">
-              {editReview ? "Edit Your Review" : "Write Your Review"}
-            </h3>
-            <form onSubmit={editReview ? handleEditReview : handleSubmitReview}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Rating
-                </label>
-                <select
-                  value={formData.rating}
-                  onChange={(e) =>
-                    setFormData({ ...formData, rating: Number(e.target.value) })
-                  }
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                >
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <option key={star} value={star}>
-                      {star} Star{star > 1 ? "s" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Review
-                </label>
-                <textarea
-                  value={formData.text}
-                  onChange={(e) =>
-                    setFormData({ ...formData, text: e.target.value })
-                  }
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                  rows="4"
-                  required
-                ></textarea>
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  type="submit"
-                  className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition"
-                >
-                  {editReview ? "Update Review" : "Submit Review"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowReviewForm(false);
+        {/* Review Modal */}
+        {showReviewModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <ReviewModal
+                  productId={product._id}
+                  productName={product.productName}
+                  rating={editReview?.rating || 0}
+                  comment={editReview?.comment || ""}
+                  onClose={() => {
+                    setShowReviewModal(false);
                     setEditReview(null);
-                    setFormData({ rating: 5, text: "" });
                   }}
-                  className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white px-4 py-2 rounded-lg font-medium transition"
-                >
-                  Cancel
-                </button>
+                  onSubmit={editReview ? handleEditReview : handleReviewSubmit}
+                  hasReviewed={!!userReview}
+                  isEditing={!!editReview}
+                  reviewId={editReview?._id}
+                />
               </div>
-            </form>
+            </div>
           </div>
         )}
 
@@ -243,7 +281,14 @@ function Reviews({ product }) {
                 <div>
                   <div className="flex text-yellow-400 mb-1">
                     {[...Array(5)].map((_, i) => (
-                      <i key={i} className="fas fa-star"></i>
+                      <FaStar
+                        key={i}
+                        className={
+                          i < Math.floor(product.rating || 0)
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }
+                      />
                     ))}
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -275,7 +320,7 @@ function Reviews({ product }) {
         <div className="space-y-6">
           {reviews.map((review, index) => (
             <div
-              key={index}
+              key={review._id}
               className="bg-white dark:bg-gray-800 rounded-xl p-6"
             >
               <div className="flex items-start space-x-4">
@@ -295,11 +340,15 @@ function Reviews({ product }) {
                       </h4>
                       <div className="flex items-center space-x-2">
                         <div className="flex text-yellow-400 text-sm">
-                          {[...Array(review.rating)].map((_, i) => (
-                            <FaStar key={i} className="fas fa-star"></FaStar>
-                          ))}
-                          {[...Array(5 - review.rating)].map((_, i) => (
-                            <i key={i} className="far fa-star"></i>
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className={
+                                i < review.rating
+                                  ? "text-yellow-400"
+                                  : "text-gray-300"
+                              }
+                            />
                           ))}
                         </div>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -310,25 +359,27 @@ function Reviews({ product }) {
                     {session && review.user._id === session.user.id && (
                       <div className="relative group">
                         <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                          <i className="fas fa-ellipsis-v"></i>
+                          <svg
+                            className="w-5 h-5"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
                         </button>
-                        <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden group-hover:block">
+                        <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                           <button
                             onClick={() => {
                               setEditReview(review);
-                              setFormData({
-                                rating: review.rating,
-                                text: review.comment,
-                              });
-                              setShowReviewForm(true);
+                              setShowReviewModal(true);
                             }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteReview(review._id)}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg"
                           >
                             Delete
                           </button>
@@ -345,6 +396,33 @@ function Reviews({ product }) {
           ))}
         </div>
 
+        {/* No Reviews Message */}
+        {reviews.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <svg
+                className="w-16 h-16 mx-auto"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No reviews yet
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              Be the first to review this product!
+            </p>
+          </div>
+        )}
+
         {/* Load More Button */}
         {hasMore && (
           <div className="text-center mt-8">
@@ -355,6 +433,16 @@ function Reviews({ product }) {
             >
               {loading ? "Loading..." : "Load More Reviews"}
             </button>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && reviews.length === 0 && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="text-gray-500 dark:text-gray-400 mt-4">
+              Loading reviews...
+            </p>
           </div>
         )}
       </div>

@@ -22,7 +22,14 @@ export async function PUT(req, { params }) {
         // Validate input
         if (!rating || rating < 1 || rating > 5) {
             return NextResponse.json(
-                { error: "Invalid rating" },
+                { error: "Invalid rating. Rating must be between 1 and 5." },
+                { status: 400 }
+            );
+        }
+
+        if (!comment || !comment.trim()) {
+            return NextResponse.json(
+                { error: "Review comment is required." },
                 { status: 400 }
             );
         }
@@ -53,10 +60,11 @@ export async function PUT(req, { params }) {
 
         // Update review
         review.rating = rating;
-        review.comment = comment?.trim() || "";
+        review.comment = comment.trim();
+        review.updatedAt = new Date();
         await review.save();
 
-        // Update product rating and review count
+        // Recalculate product rating and review count
         const allReviews = await Review.find({ product: review.product });
         const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
 
@@ -69,8 +77,22 @@ export async function PUT(req, { params }) {
             { new: true }
         );
 
+        // Populate user data for response
+        await review.populate('user', 'firstName lastName profilePicture _id');
+
         return NextResponse.json(
-            { message: "Review updated successfully", review },
+            {
+                message: "Review updated successfully",
+                review: {
+                    _id: review._id,
+                    rating: review.rating,
+                    comment: review.comment,
+                    user: review.user,
+                    product: review.product,
+                    createdAt: review.createdAt,
+                    updatedAt: review.updatedAt
+                }
+            },
             { status: 200 }
         );
 
@@ -125,7 +147,7 @@ export async function DELETE(req, { params }) {
         // Delete review
         await Review.findByIdAndDelete(id);
 
-        // Remove review from product's reviews array
+        // Remove review from product's reviews array (if it exists)
         await Product.findByIdAndUpdate(
             productId,
             {
@@ -137,7 +159,7 @@ export async function DELETE(req, { params }) {
             }
         );
 
-        // Update product rating and review count
+        // Recalculate product rating and review count
         const remainingReviews = await Review.find({ product: productId });
         const avgRating = remainingReviews.length
             ? remainingReviews.reduce((sum, r) => sum + r.rating, 0) / remainingReviews.length
