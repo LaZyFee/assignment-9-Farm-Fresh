@@ -78,7 +78,7 @@ export default function FavouritesPage() {
     updateFavoriteProducts();
   }, [favoriteIds]);
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = async (product) => {
     if (farmer) {
       Swal.fire({
         icon: "error",
@@ -92,17 +92,34 @@ export default function FavouritesPage() {
       });
       return;
     }
-    addToCart({ product, quantity: 1 });
-    Swal.fire({
-      icon: "success",
-      title: "Added to Cart",
-      toast: true,
-      position: "top",
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true,
-      text: `${product.productName} has been added to your cart.`,
-    });
+
+    try {
+      await addToCart({ product, quantity: 1 });
+
+      Swal.fire({
+        icon: "success",
+        title: "Added to Cart",
+        toast: true,
+        position: "top",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+        text: `${product.productName} has been added to your cart.`,
+      });
+    } catch (err) {
+      console.error("Add to cart failed:", err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        toast: true,
+        position: "top",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        text: err.message || "Failed to add item to cart. Please try again.",
+      });
+    }
   };
 
   const handleRemoveFromFavorites = async (productId) => {
