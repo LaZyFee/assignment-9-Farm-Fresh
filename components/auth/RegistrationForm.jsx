@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { doSocialLogin, registerUser } from "@/app/actions";
 import { FaCamera, FaGoogle, FaSeedling, FaUser } from "react-icons/fa";
 import { FaEye, FaTractor } from "react-icons/fa6";
+import { useSession } from "next-auth/react";
 
 export default function RegisterForm({ isModal = false }) {
   const [userType, setUserType] = useState("customer");
@@ -15,6 +16,7 @@ export default function RegisterForm({ isModal = false }) {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { update } = useSession();
 
   // Toggle farmer fields based on userType
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function RegisterForm({ isModal = false }) {
   };
 
   // Handle form submission
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -59,7 +62,15 @@ export default function RegisterForm({ isModal = false }) {
     try {
       const result = await registerUser(formData);
       if (result.success) {
+        await update({
+          name: `${formData.get("firstName")} ${formData.get("lastName")}`,
+          email: formData.get("email"),
+          userType: formData.get("userType"),
+        });
+
         router.push("/");
+      } else {
+        setError(result.message || "Registration failed");
       }
     } catch (err) {
       setError(err.message);

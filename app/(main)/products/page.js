@@ -515,7 +515,7 @@ export default function ProductsPage() {
                                                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
                                                     {product.productName}
                                                 </h2>
-                                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 h-10">
                                                     By{" "}
                                                     {product.farmer
                                                         ? `${product.farmer.firstName} ${product.farmer.lastName} `
@@ -553,7 +553,7 @@ export default function ProductsPage() {
                                                     <button
                                                         onClick={() => handleAddToCart(product)}
                                                         disabled={isInCart}
-                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${isInCart
+                                                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${isInCart
                                                             ? "bg-gray-400 dark:bg-gray-600 text-gray-100 cursor-not-allowed"
                                                             : "bg-emerald-600 hover:bg-emerald-700 text-white"
                                                             }`}

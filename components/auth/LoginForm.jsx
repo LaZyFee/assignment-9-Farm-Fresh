@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { credentialLogin, doSocialLogin } from "@/app/actions";
 import {
@@ -12,8 +13,10 @@ import {
   FaLock,
   FaSeedling,
 } from "react-icons/fa";
+
 export default function LoginForm({ isModal = false }) {
   const router = useRouter();
+  const { update } = useSession();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -42,15 +45,23 @@ export default function LoginForm({ isModal = false }) {
       form.append("email", formData.email);
       form.append("password", formData.password);
       form.append("remember", formData.remember);
-      // console.log("Attempting credential login with:", form);
-      // console.log(`email: ${form.get("email")}`);
-      // console.log(`password: ${form.get("password")}`);
+
       const response = await credentialLogin(form);
       if (response?.error) {
         setError(response.error);
       } else {
-        router.push("/");
-        router.refresh();
+        // Force session update
+        await update();
+
+        // Small delay to ensure session is updated
+        setTimeout(() => {
+          if (isModal) {
+            router.back();
+          } else {
+            router.push("/");
+          }
+          router.refresh();
+        }, 100);
       }
     } catch (err) {
       setError(err.message || "Something went wrong");

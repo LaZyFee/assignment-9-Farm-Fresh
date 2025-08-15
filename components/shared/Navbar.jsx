@@ -11,7 +11,7 @@ import { useCartStore } from "@/stores/cartStore";
 
 const Navbar = ({ sideMenu }) => {
   const { theme, toggleTheme } = useTheme();
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
   const { cart, setCart } = useCartStore();
@@ -40,12 +40,35 @@ const Navbar = ({ sideMenu }) => {
         console.error("Fetch cart error:", err);
       }
     }
-    fetchCart();
-  }, [setCart]);
+
+    // Only fetch cart if user is authenticated
+    if (status === "authenticated") {
+      fetchCart();
+    }
+  }, [setCart, status]);
 
   if (status === "loading") {
     return (
-      <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+      <nav className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="bg-green-500 p-2 rounded-lg">
+                <FaSeedling className="text-white text-xl"></FaSeedling>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  FarmFresh
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Local Farmer Booking
+                </p>
+              </div>
+            </Link>
+            <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      </nav>
     );
   }
 
@@ -109,17 +132,20 @@ const Navbar = ({ sideMenu }) => {
                   <FaSearch className="absolute left-3 top-3 text-gray-400"></FaSearch>
                 </div>
 
-                <Link
-                  href="/cart"
-                  className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
-                >
-                  <FaCartShopping />
-                  {cart.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cart.length}
-                    </span>
-                  )}
-                </Link>
+                {/* Only show cart for authenticated users */}
+                {session?.user && (
+                  <Link
+                    href="/cart"
+                    className="relative p-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400"
+                  >
+                    <FaCartShopping />
+                    {cart.length > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {cart.length}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 <div className="relative" ref={dropdownRef}>
                   {session?.user ? (
@@ -128,20 +154,32 @@ const Navbar = ({ sideMenu }) => {
                         onClick={() => setOpen(!open)}
                         className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 focus:outline-none"
                       >
-                        {session.user.image ? (
+                        {session.user.image || session.user.profilePicture ? (
                           <Image
-                            src={session.user.image}
+                            src={
+                              session.user.image || session.user.profilePicture
+                            }
                             alt="User"
-                            className="w-8 h-8 rounded-full"
+                            className="w-8 h-8 rounded-full object-cover"
                             width={32}
                             height={32}
+                            onError={(e) => {
+                              // Fallback to initials if image fails to load
+                              e.target.style.display = "none";
+                              e.target.nextSibling.style.display = "flex";
+                            }}
                           />
-                        ) : (
-                          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                            {session.user.name?.charAt(0) ||
-                              session.user.email?.charAt(0)}
-                          </div>
-                        )}
+                        ) : null}
+                        <div
+                          className={`w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-semibold ${
+                            session.user.image || session.user.profilePicture
+                              ? "hidden"
+                              : "flex"
+                          }`}
+                        >
+                          {session.user.name?.charAt(0) ||
+                            session.user.email?.charAt(0)}
+                        </div>
                       </button>
 
                       {open && (
@@ -153,6 +191,11 @@ const Navbar = ({ sideMenu }) => {
                             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                               {session.user.email}
                             </p>
+                            {session.user.userType && (
+                              <p className="text-xs text-green-600 dark:text-green-400 capitalize">
+                                {session.user.userType}
+                              </p>
+                            )}
                           </div>
                           <ul className="py-1 text-sm text-gray-700 dark:text-gray-300">
                             <li>
@@ -176,9 +219,10 @@ const Navbar = ({ sideMenu }) => {
                           </ul>
                           <div className="border-t border-gray-200 dark:border-gray-700">
                             <button
-                              onClick={() => {
+                              onClick={async () => {
                                 setOpen(false);
-                                signOut();
+                                await signOut({ redirect: false });
+                                window.location.href = "/"; // Force page reload after logout
                               }}
                               className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
